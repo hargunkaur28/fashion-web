@@ -1,0 +1,156 @@
+import { useState, useEffect } from 'react';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
+
+const OrdersManagement = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+  const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [filter]);
+
+  const fetchOrders = async () => {
+    try {
+      const { data } = await api.get(`/orders?status=${filter}&limit=50`);
+      setOrders(data.orders);
+    } catch {
+      toast.error('Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateOrderStatus = async (orderId, status) => {
+    try {
+      await api.put(`/orders/${orderId}/status`, { status, note: 'Status updated by admin' });
+      toast.success('Order status updated');
+      fetchOrders();
+    } catch {
+      toast.error('Failed to update order');
+    }
+  };
+
+  const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'];
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <div style={{ marginBottom: '2rem' }}>
+        <h2 style={{ marginBottom: '1rem' }}>Orders Management</h2>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {['', 'pending', 'confirmed', 'processing', 'shipped', 'delivered'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              style={{
+                padding: '0.5rem 1rem',
+                background: filter === status ? '#2563eb' : '#e5e7eb',
+                color: filter === status ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+              }}
+            >
+              {status || 'All'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="kpi-card" style={{ display: 'block' }}>
+        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #eee', background: '#f9fafb' }}>
+              <th style={{ padding: '1rem 0' }}>Order ID</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map((order) => (
+              <tr key={order._id} style={{ borderBottom: '1px solid #eee' }}>
+                <td style={{ padding: '0.75rem 0' }}>
+                  <button
+                    onClick={() => setExpandedId(expandedId === order._id ? null : order._id)}
+                    style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer' }}
+                  >
+                    {order.orderNumber || order._id.substring(0, 8)}
+                  </button>
+                </td>
+                <td>{order.user?.name}</td>
+                <td>₹{order.totalAmount}</td>
+                <td>
+                  <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', background: order.paymentStatus === 'paid' ? '#d1fae5' : '#fed7aa', color: order.paymentStatus === 'paid' ? '#065f46' : '#92400e' }}>
+                    {order.paymentStatus}
+                  </span>
+                </td>
+                <td>
+                  <select
+                    value={order.status}
+                    onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                    style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  >
+                    {statuses.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                <td>
+                  <button
+                    onClick={() => setExpandedId(expandedId === order._id ? null : order._id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                  >
+                    {expandedId === order._id ? '▼' : '▶'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {expandedId && (
+        <div style={{ marginTop: '2rem', background: '#f9fafb', padding: '1.5rem', borderRadius: '0.5rem' }}>
+          {orders
+            .filter((o) => o._id === expandedId)
+            .map((order) => (
+              <div key={order._id}>
+                <h3>Order Details - {order.orderNumber}</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1rem' }}>
+                  <div>
+                    <h4>Items</h4>
+                    {order.items.map((item, idx) => (
+                      <div key={idx} style={{ marginBottom: '0.5rem' }}>
+                        <span>{item.name}</span> x <span style={{ fontWeight: 'bold' }}>{item.quantity}</span> @ ₹{item.price}
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <h4>Shipping Address</h4>
+                    <p>{order.shippingAddress.fullName}</p>
+                    <p>{order.shippingAddress.line1}</p>
+                    <p>
+                      {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.pincode}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OrdersManagement;
