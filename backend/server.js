@@ -21,8 +21,8 @@ const app = express();
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  ...process.env.ADMIN_URL.split(',').map(url => url.trim())
-];
+  ...(process.env.ADMIN_URL ? process.env.ADMIN_URL.split(',').map(url => url.trim()) : [])
+].filter(Boolean);
 
 app.use(cors({
   origin: allowedOrigins,
