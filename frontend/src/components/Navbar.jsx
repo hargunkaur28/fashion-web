@@ -25,89 +25,89 @@ const Navbar = () => {
   return (
     <>
       <header className={`navbar-header ${hasBackground ? 'scrolled' : ''}`}>
-      <div className="container navbar-container">
-        <div className="navbar-left">
-          <button 
-            className="btn-icon mobile-menu" 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <Menu size={24} />
-          </button>
-          <Link to="/" className="brand-logo">
-            VOGUE<span>VILLA</span>
-          </Link>
-          <nav className="desktop-nav">
-            <Link to="/category/men" className="nav-link">Men</Link>
-            <Link to="/category/women" className="nav-link">Women</Link>
-            <Link to="/category/kids" className="nav-link">Kids</Link>
-          </nav>
-        </div>
+        <div className="container navbar-container">
+          <div className="navbar-left">
+            <button
+              className="btn-icon mobile-menu"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              <Menu size={24} />
+            </button>
+            <Link to="/" className="brand-logo">
+              VOGUE<span>VILLA</span>
+            </Link>
+            <nav className="desktop-nav">
+              <Link to="/category/men" className="nav-link">Men</Link>
+              <Link to="/category/women" className="nav-link">Women</Link>
+              <Link to="/category/kids" className="nav-link">Kids</Link>
+            </nav>
+          </div>
 
-        <div className="navbar-center search-container">
-          <Search className="search-icon" size={18} />
-          <input type="text" placeholder="Search for products, brands and more" className="search-input" />
-        </div>
+          <div className="navbar-center search-container">
+            <Search className="search-icon" size={18} />
+            <input type="text" placeholder="Search for products, brands and more" className="search-input" />
+          </div>
 
-        <div className="navbar-right">
-          <div className="nav-actions">
-            {isAuth ? (
-              <div className="profile-dropdown-wrapper">
-                <button className="nav-action-item">
-                  <User size={20} />
-                  <span>Profile</span>
-                </button>
-                <div className="profile-dropdown">
-                  <div className="dropdown-header">
-                    <p className="font-heading">Hello {user?.name}</p>
-                    <p className="text-muted">{user?.email}</p>
+          <div className="navbar-right">
+            <div className="nav-actions">
+              {isAuth ? (
+                <div className="profile-dropdown-wrapper">
+                  <button className="nav-action-item">
+                    <User size={20} />
+                    <span>Profile</span>
+                  </button>
+                  <div className="profile-dropdown">
+                    <div className="dropdown-header">
+                      <p className="font-heading">Hello {user?.name}</p>
+                      <p className="text-muted">{user?.email}</p>
+                    </div>
+                    <Link to="/orders" className="dropdown-item">Orders</Link>
+                    <button onClick={() => { logout(); navigate('/'); }} className="dropdown-item">Logout</button>
                   </div>
-                  <Link to="/orders" className="dropdown-item">Orders</Link>
-                  <button onClick={() => { logout(); navigate('/'); }} className="dropdown-item">Logout</button>
                 </div>
-              </div>
-            ) : (
-              <Link to="/login" className="nav-action-item">
-                <User size={20} />
-                <span>Login</span>
+              ) : (
+                <Link to="/login" className="nav-action-item">
+                  <User size={20} />
+                  <span>Login</span>
+                </Link>
+              )}
+
+              <Link to="/wishlist" className="nav-action-item">
+                <Heart size={20} />
+                <span>Wishlist</span>
               </Link>
-            )}
-            
-            <Link to="/wishlist" className="nav-action-item">
-              <Heart size={20} />
-              <span>Wishlist</span>
-            </Link>
-            
-            <Link to="/cart" className="nav-action-item cart-action">
-              <ShoppingBag size={20} />
-              <span>Cart</span>
-              {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
-            </Link>
+
+              <Link to="/cart" className="nav-action-item cart-action">
+                <ShoppingBag size={20} />
+                <span>Cart</span>
+                {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="mobile-menu-panel">
+        <div className="mobile-menu-panel show">
           <nav className="mobile-nav">
-            <Link 
-              to="/category/men" 
+            <Link
+              to="/category/men"
               className="mobile-nav-link"
               onClick={() => setMobileMenuOpen(false)}
             >
               Men
             </Link>
-            <Link 
-              to="/category/women" 
+            <Link
+              to="/category/women"
               className="mobile-nav-link"
               onClick={() => setMobileMenuOpen(false)}
             >
               Women
             </Link>
-            <Link 
-              to="/category/kids" 
+            <Link
+              to="/category/kids"
               className="mobile-nav-link"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -118,46 +118,46 @@ const Navbar = () => {
           <div className="mobile-menu-actions">
             {isAuth ? (
               <>
-                <Link 
-                  to="/orders" 
+                <Link
+                  to="/orders"
                   className="mobile-menu-item"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  📦 Orders
+                  Orders
                 </Link>
-                <button 
-                  onClick={() => { 
-                    logout(); 
-                    navigate('/'); 
+                <button
+                  onClick={() => {
+                    logout();
+                    navigate('/');
                     setMobileMenuOpen(false);
-                  }} 
+                  }}
                   className="mobile-menu-item"
                 >
                   Logout
                 </button>
               </>
             ) : (
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
                 className="mobile-menu-item"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Login
               </Link>
             )}
-            <Link 
-              to="/wishlist" 
+            <Link
+              to="/wishlist"
               className="mobile-menu-item"
               onClick={() => setMobileMenuOpen(false)}
             >
-              ❤️ Wishlist
+              Wishlist
             </Link>
-            <Link 
-              to="/cart" 
+            <Link
+              to="/cart"
               className="mobile-menu-item"
               onClick={() => setMobileMenuOpen(false)}
             >
-              🛒 Cart {totalItems > 0 && `(${totalItems})`}
+              Cart {totalItems > 0 && `(${totalItems})`}
             </Link>
           </div>
         </div>
