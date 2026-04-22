@@ -1,12 +1,12 @@
 .hero-section {
   position: relative;
-  height: 700px;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #f5f0ed;
   overflow: hidden;
-  padding: 0 5%;
+  padding: 4rem 5%;
 }
 
 .hero-video {
@@ -245,8 +245,8 @@
 
 @media (max-width: 992px) {
   .hero-section {
-    height: 500px;
-    padding: 0 3%;
+    min-height: 100vh;
+    padding: 3rem 3%;
   }
 
   .hero-title {
@@ -293,8 +293,8 @@
 
 @media (max-width: 768px) {
   .hero-section {
-    height: 400px;
-    padding: 0 2%;
+    min-height: 100vh;
+    padding: 3rem 2%;
   }
 
   .hero-title {
@@ -355,26 +355,26 @@
 
 @media (max-width: 480px) {
   .hero-section {
-    height: 300px;
-    padding: 0 2%;
+    min-height: 100vh;
+    padding: 4rem 5%;
   }
 
   .hero-title {
-    font-size: 1.6rem;
-    margin-bottom: 0.75rem;
-    letter-spacing: 0px;
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+    letter-spacing: 0.5px;
   }
 
   .hero-subtitle {
-    font-size: 0.8rem;
-    margin-bottom: 1rem;
-    line-height: 1.5;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
   }
 
   .hero-btn {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
+    padding: 0.8rem 1.5rem;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
   }
 
   .section-title {
