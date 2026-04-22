@@ -4,7 +4,8 @@
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
 }
 
 .product-img-wrapper {
@@ -98,11 +99,13 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 1rem;
-  background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0));
+  padding: 1.5rem 1rem;
+  background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0));
   transform: translateY(100%);
-  transition: transform var(--transition-normal);
+  transition: all var(--transition-normal);
   z-index: 2;
+  display: flex;
+  justify-content: center;
 }
 
 .add-to-cart-overlay.show {
@@ -155,8 +158,11 @@
 
 .discount {
   font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-primary);
+  font-weight: 700;
+  color: #ff3e6c;
+  background-color: #fff0f5;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 /* Responsive Design */

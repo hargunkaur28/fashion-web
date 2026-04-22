@@ -7,6 +7,7 @@ import { formatPrice } from '../utils/formatPrice';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import './Cart.css';
+import './Checkout.css';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -49,7 +50,6 @@ const Checkout = () => {
   };
 
   const applyCoupon = () => {
-    // Simple coupon validation - in production, validate from backend
     if (coupon === 'SAVE10') {
       setDiscount(Math.round(totalAmount * 0.1));
       toast.success('Coupon applied! 10% discount');
@@ -87,7 +87,6 @@ const Checkout = () => {
       const { data } = await api.post('/orders', orderData);
 
       if (paymentMethod === 'razorpay') {
-        // In production, integrate actual Razorpay payment gateway
         toast.success('Order created! Proceeding to payment...');
         setTimeout(() => {
           clearCart();
@@ -107,7 +106,7 @@ const Checkout = () => {
 
   if (cart.items.length === 0) {
     return (
-      <div className="container py-5 text-center">
+      <div className="container py-5 text-center fade-in">
         <div className="empty-cart-icon mb-4">📦</div>
         <h2>Your cart is empty</h2>
         <p className="text-muted mt-2 mb-4">Add items before proceeding to checkout</p>
@@ -119,411 +118,279 @@ const Checkout = () => {
   }
 
   return (
-    <div className="container mt-4 mb-5">
+    <div className="container mt-4 mb-5 fade-in">
       <h1 className="cart-title mb-4">Checkout</h1>
 
       <div className="cart-layout">
-        {/* Progress Steps */}
-        <div className="checkout-steps mb-5">
-          <div className={`step ${step >= 1 ? 'active' : ''}`}>
-            <div className="step-number"><MapPin size={18} /></div>
-            <div className="step-label">Shipping</div>
+        <div className="checkout-main">
+          {/* Progress Steps */}
+          <div className="checkout-steps mb-5">
+            <div className={`step ${step >= 1 ? 'active' : ''}`}>
+              <div className="step-number">{step > 1 ? <Check size={18}/> : <MapPin size={18} />}</div>
+              <div className="step-label">Shipping</div>
+            </div>
+            <div className="step-connector"></div>
+            <div className={`step ${step >= 2 ? 'active' : ''}`}>
+              <div className="step-number">{step > 2 ? <Check size={18}/> : <CreditCard size={18} />}</div>
+              <div className="step-label">Payment</div>
+            </div>
+            <div className="step-connector"></div>
+            <div className={`step ${step >= 3 ? 'active' : ''}`}>
+              <div className="step-number"><Check size={18} /></div>
+              <div className="step-label">Confirm</div>
+            </div>
           </div>
-          <div className="step-connector"></div>
-          <div className={`step ${step >= 2 ? 'active' : ''}`}>
-            <div className="step-number"><CreditCard size={18} /></div>
-            <div className="step-label">Payment</div>
-          </div>
-          <div className="step-connector"></div>
-          <div className={`step ${step >= 3 ? 'active' : ''}`}>
-            <div className="step-number"><Check size={18} /></div>
-            <div className="step-label">Confirm</div>
-          </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="cart-items">
-          {step === 1 && (
-            <div className="card p-4">
-              <h2 className="mb-4">
-                <MapPin size={24} className="me-2" />
-                Shipping Address
-              </h2>
+          {/* Main Content */}
+          <div className="checkout-content">
+            {step === 1 && (
+              <div className="checkout-card reveal active">
+                <h2>
+                  <MapPin size={24} />
+                  Shipping Details
+                </h2>
 
-              <div className="form-group mb-3">
-                <label>Full Name *</label>
-                <input
-                  type="text"
-                  placeholder="John Doe"
-                  value={shipping.fullName}
-                  onChange={(e) => setShipping({ ...shipping, fullName: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group mb-3">
-                <label>Phone Number *</label>
-                <input
-                  type="tel"
-                  placeholder="9876543210"
-                  value={shipping.phone}
-                  onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group mb-3">
-                <label>Address Line 1 *</label>
-                <input
-                  type="text"
-                  placeholder="House no, Building Name"
-                  value={shipping.line1}
-                  onChange={(e) => setShipping({ ...shipping, line1: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group mb-3">
-                <label>Address Line 2</label>
-                <input
-                  type="text"
-                  placeholder="Road name, Area, Colony (Optional)"
-                  value={shipping.line2}
-                  onChange={(e) => setShipping({ ...shipping, line2: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-row mb-3">
-                <div className="form-group">
-                  <label>City *</label>
+                <div className="form-group mb-4">
+                  <label className="form-label">Full Name *</label>
                   <input
                     type="text"
-                    placeholder="Mumbai"
-                    value={shipping.city}
-                    onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+                    placeholder="Enter your full name"
+                    value={shipping.fullName}
+                    onChange={(e) => setShipping({ ...shipping, fullName: e.target.value })}
                     className="form-input"
                   />
                 </div>
-                <div className="form-group">
-                  <label>State *</label>
+
+                <div className="form-group mb-4">
+                  <label className="form-label">Phone Number *</label>
                   <input
-                    type="text"
-                    placeholder="Maharashtra"
-                    value={shipping.state}
-                    onChange={(e) => setShipping({ ...shipping, state: e.target.value })}
+                    type="tel"
+                    placeholder="10-digit mobile number"
+                    value={shipping.phone}
+                    onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
                     className="form-input"
                   />
                 </div>
-              </div>
 
-              <div className="form-group mb-4">
-                <label>Pincode *</label>
-                <input
-                  type="text"
-                  placeholder="400001"
-                  value={shipping.pincode}
-                  onChange={(e) => setShipping({ ...shipping, pincode: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <button
-                onClick={() => validateShipping() && setStep(2)}
-                className="btn btn-primary w-100"
-              >
-                Continue to Payment <ArrowRight size={18} />
-              </button>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="card p-4">
-              <h2 className="mb-4">
-                <CreditCard size={24} className="me-2" />
-                Payment Method
-              </h2>
-
-              <div className="payment-options">
-                <label className="payment-option">
+                <div className="form-group mb-4">
+                  <label className="form-label">Flat, House no., Building, Company, Apartment *</label>
                   <input
-                    type="radio"
-                    name="payment"
-                    value="razorpay"
-                    checked={paymentMethod === 'razorpay'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    type="text"
+                    placeholder="Address Line 1"
+                    value={shipping.line1}
+                    onChange={(e) => setShipping({ ...shipping, line1: e.target.value })}
+                    className="form-input"
                   />
-                  <span>Razorpay (Credit/Debit Card, UPI, Netbanking)</span>
-                </label>
+                </div>
 
-                <label className="payment-option">
+                <div className="form-group mb-4">
+                  <label className="form-label">Area, Street, Sector, Village</label>
                   <input
-                    type="radio"
-                    name="payment"
-                    value="cod"
-                    checked={paymentMethod === 'cod'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    type="text"
+                    placeholder="Address Line 2 (Optional)"
+                    value={shipping.line2}
+                    onChange={(e) => setShipping({ ...shipping, line2: e.target.value })}
+                    className="form-input"
                   />
-                  <span>Cash on Delivery</span>
-                </label>
-              </div>
+                </div>
 
-              <h3 className="mt-5 mb-3">Promo Code</h3>
-              <div className="coupon-input d-flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Enter coupon code (e.g., SAVE10)"
-                  value={coupon}
-                  onChange={(e) => setCoupon(e.target.value.toUpperCase())}
-                  className="form-input flex-1"
-                />
-                <button onClick={applyCoupon} className="btn btn-outline">
-                  Apply
-                </button>
-              </div>
-              <small className="text-muted d-block mt-2">Try: SAVE10 (10% off) or SAVE20 (20% off)</small>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">City *</label>
+                    <input
+                      type="text"
+                      placeholder="City"
+                      value={shipping.city}
+                      onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">State *</label>
+                    <input
+                      type="text"
+                      placeholder="State"
+                      value={shipping.state}
+                      onChange={(e) => setShipping({ ...shipping, state: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+                </div>
 
-              <div className="d-flex gap-3 mt-5">
-                <button onClick={() => setStep(1)} className="btn btn-outline flex-1">
-                  Back
-                </button>
-                <button onClick={() => setStep(3)} className="btn btn-primary flex-1">
-                  Review Order <ArrowRight size={18} />
-                </button>
-              </div>
-            </div>
-          )}
+                <div className="form-group mb-5">
+                  <label className="form-label">Pincode *</label>
+                  <input
+                    type="text"
+                    placeholder="6-digit Pincode"
+                    value={shipping.pincode}
+                    onChange={(e) => setShipping({ ...shipping, pincode: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
 
-          {step === 3 && (
-            <div className="card p-4">
-              <h2 className="mb-4">
-                <Check size={24} className="me-2" />
-                Order Summary
-              </h2>
-
-              <h3 className="mt-4 mb-3">Shipping Address</h3>
-              <div className="address-summary">
-                <p><strong>{shipping.fullName}</strong></p>
-                <p>{shipping.line1}, {shipping.line2}</p>
-                <p>{shipping.city}, {shipping.state} {shipping.pincode}</p>
-                <p>📞 {shipping.phone}</p>
-              </div>
-
-              <h3 className="mt-4 mb-3">Payment Method</h3>
-              <p>{paymentMethod === 'razorpay' ? 'Online Payment (Razorpay)' : 'Cash on Delivery'}</p>
-
-              <div className="d-flex gap-3 mt-5">
-                <button onClick={() => setStep(2)} className="btn btn-outline flex-1">
-                  Back
-                </button>
                 <button
-                  onClick={createOrder}
-                  disabled={loading}
-                  className="btn btn-primary flex-1"
+                  onClick={() => validateShipping() && setStep(2)}
+                  className="btn btn-primary w-100 py-3"
                 >
-                  {loading ? 'Processing...' : 'Place Order'} <ArrowRight size={18} />
+                  Proceed to Payment <ArrowRight size={18} />
                 </button>
               </div>
-            </div>
-          )}
+            )}
+
+            {step === 2 && (
+              <div className="checkout-card reveal active">
+                <h2>
+                  <CreditCard size={24} />
+                  Payment Method
+                </h2>
+
+                <div className="payment-options mb-5">
+                  <label className="payment-option">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="razorpay"
+                      checked={paymentMethod === 'razorpay'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    />
+                    <span>Online Payment (Razorpay / UPI / Cards)</span>
+                  </label>
+
+                  <label className="payment-option">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="cod"
+                      checked={paymentMethod === 'cod'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    />
+                    <span>Cash on Delivery (Pay at your doorstep)</span>
+                  </label>
+                </div>
+
+                <div className="coupon-section">
+                  <h3 className="mb-3 font-heading" style={{ fontSize: '1.2rem' }}>Apply Coupon Code</h3>
+                  <div className="coupon-input d-flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. SAVE10"
+                      value={coupon}
+                      onChange={(e) => setCoupon(e.target.value.toUpperCase())}
+                      className="form-input flex-1"
+                    />
+                    <button onClick={applyCoupon} className="btn btn-outline" style={{ padding: '0 1.5rem' }}>
+                      Apply
+                    </button>
+                  </div>
+                  <div className="mt-3">
+                    <span className="badge featured" style={{ cursor: 'pointer' }} onClick={() => setCoupon('SAVE10')}>SAVE10</span>
+                    <span className="badge trending ms-2" style={{ cursor: 'pointer' }} onClick={() => setCoupon('SAVE20')}>SAVE20</span>
+                  </div>
+                </div>
+
+                <div className="d-flex gap-3 mt-5">
+                  <button onClick={() => setStep(1)} className="btn btn-outline flex-1">
+                    Back
+                  </button>
+                  <button onClick={() => setStep(3)} className="btn btn-primary flex-1">
+                    Review Summary <ArrowRight size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="checkout-card reveal active">
+                <h2>
+                  <Check size={24} />
+                  Review & Confirm
+                </h2>
+
+                <div className="mb-4">
+                  <h3 className="mb-3 font-heading" style={{ fontSize: '1.1rem' }}>Shipping to:</h3>
+                  <div className="address-summary">
+                    <p><strong>{shipping.fullName}</strong></p>
+                    <p>{shipping.line1}, {shipping.line2}</p>
+                    <p>{shipping.city}, {shipping.state} - {shipping.pincode}</p>
+                    <p className="mt-2">📱 {shipping.phone}</p>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <h3 className="mb-3 font-heading" style={{ fontSize: '1.1rem' }}>Payment via:</h3>
+                  <div className="payment-option" style={{ cursor: 'default' }}>
+                    <CreditCard size={18} className="text-primary" />
+                    <span>{paymentMethod === 'razorpay' ? 'Secure Online Payment' : 'Cash on Delivery'}</span>
+                  </div>
+                </div>
+
+                <div className="d-flex gap-3 mt-5">
+                  <button onClick={() => setStep(2)} className="btn btn-outline flex-1">
+                    Back to Payment
+                  </button>
+                  <button
+                    onClick={createOrder}
+                    disabled={loading}
+                    className="btn btn-primary flex-1"
+                  >
+                    {loading ? 'Processing...' : 'Complete Purchase'} <ArrowRight size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Summary Sidebar */}
         <div className="cart-summary">
-          <div className="card summary-card">
-            <h3 className="summary-title mb-3">Order Summary</h3>
+          <div className="card summary-card reveal active">
+            <h3 className="summary-title mb-4">Order Summary</h3>
 
-            <div className="summary-section mb-3">
-              <h4 className="summary-subtitle">Items ({cart.items.length})</h4>
+            <div className="summary-items-list mb-4">
               {cart.items.map(item => (
-                <div key={item._id} className="summary-item text-muted">
-                  <span>
-                    {item.product.name.substring(0, 20)}... x {item.quantity}
+                <div key={item._id} className="summary-item d-flex justify-between mb-2" style={{ fontSize: '0.85rem' }}>
+                  <span className="text-muted">
+                    {item.product.name} ({item.variantSize}) x {item.quantity}
                   </span>
-                  <span>{formatPrice(item.price * item.quantity)}</span>
+                  <span className="font-bold">{formatPrice(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
 
-            <div className="divider my-3"></div>
-
-            <div className="summary-row">
-              <span>Subtotal</span>
-              <span>{formatPrice(totalAmount)}</span>
-            </div>
-
-            {discount > 0 && (
-              <div className="summary-row text-success">
-                <span>Discount</span>
-                <span>-{formatPrice(discount)}</span>
+            <div className="summary-details">
+              <div className="summary-row">
+                <span className="text-muted">Subtotal</span>
+                <span>{formatPrice(totalAmount)}</span>
               </div>
-            )}
 
-            <div className="summary-row">
-              <span>Shipping</span>
-              <span className={shipping_charge === 0 ? 'text-success' : ''}>
-                {shipping_charge === 0 ? 'FREE' : formatPrice(shipping_charge)}
-              </span>
+              {discount > 0 && (
+                <div className="summary-row text-success">
+                  <span>Discount Applied</span>
+                  <span>-{formatPrice(discount)}</span>
+                </div>
+              )}
+
+              <div className="summary-row">
+                <span className="text-muted">Shipping Fee</span>
+                <span className={shipping_charge === 0 ? 'text-success' : ''}>
+                  {shipping_charge === 0 ? 'FREE' : formatPrice(shipping_charge)}
+                </span>
+              </div>
+
+              <div className="divider my-4"></div>
+
+              <div className="summary-row total-row" style={{ fontSize: '1.25rem' }}>
+                <span>Total Amount</span>
+                <span className="text-primary">{formatPrice(finalAmount)}</span>
+              </div>
             </div>
 
-            <div className="divider my-3"></div>
-
-            <div className="summary-row total-row">
-              <span>Total Amount</span>
-              <span>{formatPrice(finalAmount)}</span>
+            <div className="mt-4 p-3 bg-light rounded text-center" style={{ fontSize: '0.75rem', color: '#888', background: '#fcfaf9' }}>
+              🛡️ Secure 256-bit SSL encrypted checkout
             </div>
           </div>
         </div>
       </div>
-
-      <style>{`
-        .checkout-steps {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 2rem;
-          margin: 2rem 0;
-          flex-wrap: wrap;
-        }
-
-        .step {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.5rem;
-          opacity: 0.5;
-          transition: all 0.3s ease;
-        }
-
-        .step.active {
-          opacity: 1;
-          color: #2563eb;
-        }
-
-        .step-number {
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          border: 2px solid currentColor;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          transition: all 0.3s ease;
-        }
-
-        .step.active .step-number {
-          background: #2563eb;
-          color: white;
-          border-color: #2563eb;
-        }
-
-        .step-label {
-          font-size: 0.85rem;
-          font-weight: 500;
-        }
-
-        .step-connector {
-          width: 60px;
-          height: 2px;
-          background: #e5e7eb;
-          margin: 25px 0;
-        }
-
-        .form-input {
-          width: 100%;
-          padding: 0.75rem;
-          border: 1px solid #e5e7eb;
-          border-radius: 0.5rem;
-          font-size: 1rem;
-          transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .form-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1rem;
-        }
-
-        .form-group {
-          margin-bottom: 1rem;
-        }
-
-        .form-group label {
-          display: block;
-          margin-bottom: 0.5rem;
-          font-weight: 500;
-          font-size: 0.9rem;
-        }
-
-        .payment-options {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .payment-option {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 1rem;
-          border: 2px solid #e5e7eb;
-          border-radius: 0.5rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .payment-option:hover {
-          border-color: #2563eb;
-          background: rgba(37, 99, 235, 0.05);
-        }
-
-        .payment-option input[type="radio"] {
-          cursor: pointer;
-        }
-
-        .payment-option input[type="radio"]:checked {
-          accent-color: #2563eb;
-        }
-
-        .coupon-input {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .address-summary {
-          background: #f9fafb;
-          padding: 1rem;
-          border-radius: 0.5rem;
-          line-height: 1.8;
-        }
-
-        .address-summary p {
-          margin: 0.25rem 0;
-          font-size: 0.9rem;
-        }
-
-        @media (max-width: 768px) {
-          .checkout-steps {
-            gap: 1rem;
-          }
-
-          .step-connector {
-            width: 30px;
-            margin: 15px 0;
-          }
-
-          .form-row {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
     </div>
   );
 };

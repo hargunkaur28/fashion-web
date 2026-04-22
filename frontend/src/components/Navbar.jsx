@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, Heart, User, Search, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -9,22 +9,25 @@ const Navbar = () => {
   const { isAuth, user, logout } = useAuth();
   const { totalItems } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === '/';
   const [hasBackground, setHasBackground] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      // When scrolled more than 600px (past hero section), show background
       setHasBackground(window.scrollY > 600);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // On non-home pages, always show the solid navbar
+  const showBackground = !isHome || hasBackground;
+
   return (
     <>
-      <header className={`navbar-header ${hasBackground ? 'scrolled' : ''}`}>
+      <header className={`navbar-header ${showBackground ? 'scrolled' : ''}`}>
         <div className="container navbar-container">
           <div className="navbar-left">
             <button
