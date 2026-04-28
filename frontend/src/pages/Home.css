@@ -543,7 +543,8 @@
 
 @media (max-width: 768px) {
   .hero-section {
-    height: 420px;
+    height: 100vh;
+    height: 100dvh;
     padding: 0 2%;
   }
 
@@ -639,7 +640,8 @@
 
 @media (max-width: 480px) {
   .hero-section {
-    height: 320px;
+    height: 100vh;
+    height: 100dvh;
     padding: 0 2%;
   }
 
