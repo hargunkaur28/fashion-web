@@ -24,8 +24,19 @@ const OrdersManagement = () => {
   };
 
   const updateOrderStatus = async (orderId, status) => {
+    let note = 'Status updated by admin';
+    if (status === 'return_rejected') {
+      note = window.prompt("Please provide a reason for rejecting this return:");
+      if (note === null) return; // User cancelled prompt
+      if (note.trim() === '') note = 'Return request rejected';
+    } else if (status === 'returned') {
+      note = window.prompt("Add a note for this return approval (optional):") || 'Return approved by admin';
+    } else if (status === 'return_requested') {
+      note = 'Return requested';
+    }
+
     try {
-      await api.put(`/orders/${orderId}/status`, { status, note: 'Status updated by admin' });
+      await api.put(`/orders/${orderId}/status`, { status, note });
       toast.success('Order status updated');
       fetchOrders();
     } catch {
@@ -33,7 +44,7 @@ const OrdersManagement = () => {
     }
   };
 
-  const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'];
+  const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'return_requested', 'return_rejected', 'returned'];
 
   if (loading) return <div>Loading...</div>;
 
@@ -42,7 +53,7 @@ const OrdersManagement = () => {
       <div style={{ marginBottom: '2rem' }}>
         <h2 style={{ marginBottom: '1rem' }}>Orders Management</h2>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {['', 'pending', 'confirmed', 'processing', 'shipped', 'delivered'].map((status) => (
+          {['', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'return_requested'].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}

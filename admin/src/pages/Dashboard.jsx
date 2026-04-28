@@ -14,7 +14,45 @@ const Dashboard = () => {
 
   return (
     <div>
-      <h1 className="admin-page-title">Dashboard Overview</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h1 className="admin-page-title" style={{ margin: 0 }}>Dashboard Overview</h1>
+      </div>
+      
+      {stats.returnRequestsCount > 0 && (
+        <div style={{ 
+          background: '#fff7ed', 
+          borderLeft: '4px solid #f97316', 
+          padding: '1rem 1.5rem', 
+          marginBottom: '2rem', 
+          borderRadius: '0.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ background: '#f97316', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 700 }}>
+              {stats.returnRequestsCount}
+            </div>
+            <p style={{ margin: 0, fontWeight: 600, color: '#9a3412' }}>
+              Action Required: You have {stats.returnRequestsCount === 1 ? '1 pending return request' : `${stats.returnRequestsCount} pending return requests`} that need your approval.
+            </p>
+          </div>
+          <a href="/admin/orders" style={{ 
+            padding: '0.5rem 1rem', 
+            background: 'white', 
+            color: '#f97316', 
+            textDecoration: 'none', 
+            borderRadius: '0.25rem', 
+            fontWeight: 600,
+            border: '1px solid #fed7aa',
+            fontSize: '0.9rem'
+          }}>
+            Review Now
+          </a>
+        </div>
+      )}
+
       <div className="kpi-grid">
         <div className="kpi-card">
           <div className="kpi-icon"><ShoppingCart size={24}/></div>

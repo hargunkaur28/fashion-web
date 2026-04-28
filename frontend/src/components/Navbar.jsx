@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Heart, User, Search, Menu } from 'lucide-react';
+import { ShoppingBag, Heart, User, Search, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useState, useEffect } from 'react';
@@ -11,34 +11,40 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === '/';
-  const [hasBackground, setHasBackground] = useState(false);
+  const [hasBackground, setHasBackground] = useState(!isHome);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+    if (!isHome) {
+      setHasBackground(true);
+      return;
+    }
     const handleScroll = () => {
       setHasBackground(window.scrollY > 600);
     };
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // On non-home pages, always show the solid navbar
-  const showBackground = !isHome || hasBackground;
+  }, [isHome]);
 
   return (
     <>
-      <header className={`navbar-header ${showBackground ? 'scrolled' : ''}`}>
+      <header className={`navbar-header ${hasBackground ? 'scrolled' : ''}`}>
         <div className="container navbar-container">
           <div className="navbar-left">
-            <button
-              className="btn-icon mobile-menu"
+            <button 
+              className="btn-icon mobile-menu" 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
-              <Menu size={24} />
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <Link to="/" className="brand-logo">
-              VOGUE<span>VILLA</span>
+              <img src="/dimple-logo.png" alt="Dimple - A Complete Family Store" className="brand-logo-img" />
+              <div className="brand-text">
+                <span className="brand-name">Dimple</span>
+                <span className="brand-tagline">A Complete Family Store</span>
+              </div>
             </Link>
             <nav className="desktop-nav">
               <Link to="/category/men" className="nav-link">Men</Link>
@@ -49,7 +55,7 @@ const Navbar = () => {
 
           <div className="navbar-center search-container">
             <Search className="search-icon" size={18} />
-            <input type="text" placeholder="Search for products, brands and more" className="search-input" />
+            <input type="text" placeholder="Search for kurtas, sarees, shirts and more..." className="search-input" />
           </div>
 
           <div className="navbar-right">
@@ -75,12 +81,12 @@ const Navbar = () => {
                   <span>Login</span>
                 </Link>
               )}
-
+              
               <Link to="/wishlist" className="nav-action-item">
                 <Heart size={20} />
                 <span>Wishlist</span>
               </Link>
-
+              
               <Link to="/cart" className="nav-action-item cart-action">
                 <ShoppingBag size={20} />
                 <span>Cart</span>
@@ -92,79 +98,82 @@ const Navbar = () => {
       </header>
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="mobile-menu-panel show">
-          <nav className="mobile-nav">
-            <Link
-              to="/category/men"
-              className="mobile-nav-link"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Men
-            </Link>
-            <Link
-              to="/category/women"
-              className="mobile-nav-link"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Women
-            </Link>
-            <Link
-              to="/category/kids"
-              className="mobile-nav-link"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Kids
-            </Link>
-          </nav>
-          <div className="mobile-menu-divider"></div>
-          <div className="mobile-menu-actions">
-            {isAuth ? (
-              <>
-                <Link
-                  to="/orders"
-                  className="mobile-menu-item"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Orders
-                </Link>
-                <button
-                  onClick={() => {
-                    logout();
-                    navigate('/');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="mobile-menu-item"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <Link
-                to="/login"
+      <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'show' : ''}`} onClick={() => setMobileMenuOpen(false)} />
+      <div className={`mobile-menu-panel ${mobileMenuOpen ? 'show' : ''}`}>
+        <div className="mobile-menu-header">
+          <img src="/dimple-logo.png" alt="Dimple" className="mobile-logo" />
+          <span className="mobile-brand-name">Dimple</span>
+        </div>
+        <nav className="mobile-nav">
+          <Link 
+            to="/category/men" 
+            className="mobile-nav-link"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            👔 Men
+          </Link>
+          <Link 
+            to="/category/women" 
+            className="mobile-nav-link"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            👗 Women
+          </Link>
+          <Link 
+            to="/category/kids" 
+            className="mobile-nav-link"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            👶 Kids
+          </Link>
+        </nav>
+        <div className="mobile-menu-divider"></div>
+        <div className="mobile-menu-actions">
+          {isAuth ? (
+            <>
+              <Link 
+                to="/orders" 
                 className="mobile-menu-item"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Login
+                📦 My Orders
               </Link>
-            )}
-            <Link
-              to="/wishlist"
+              <button 
+                onClick={() => { 
+                  logout(); 
+                  navigate('/'); 
+                  setMobileMenuOpen(false);
+                }} 
+                className="mobile-menu-item"
+              >
+                🚪 Logout
+              </button>
+            </>
+          ) : (
+            <Link 
+              to="/login" 
               className="mobile-menu-item"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Wishlist
+              🔐 Login / Sign Up
             </Link>
-            <Link
-              to="/cart"
-              className="mobile-menu-item"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Cart {totalItems > 0 && `(${totalItems})`}
-            </Link>
-          </div>
+          )}
+          <Link 
+            to="/wishlist" 
+            className="mobile-menu-item"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            ❤️ Wishlist
+          </Link>
+          <Link 
+            to="/cart" 
+            className="mobile-menu-item"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            🛒 Cart {totalItems > 0 && `(${totalItems})`}
+          </Link>
         </div>
-      )}
+      </div>
     </>
   );
 };

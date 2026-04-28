@@ -14,7 +14,7 @@ const CategoryPage = () => {
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
 
-  const categories = ['Shirts', 'T-Shirts', 'Jeans', 'Dresses', 'Trousers', 'Jackets', 'Accessories'];
+  const categories = ['Shirt', 'T-Shirt', 'Jeans', 'Kurta', 'Ethnic', 'Indo-Western', 'Plus-Size', 'Dress'];
   const priceOptions = [
     { label: 'All Prices', min: '', max: '' },
     { label: 'Under ₹1,000', min: '0', max: '1000' },
@@ -49,8 +49,9 @@ const CategoryPage = () => {
   }, [gender, sort, selectedTypes, priceRange]);
 
   const handleTypeChange = (type) => {
+    const formattedType = type.toLowerCase();
     setSelectedTypes(prev => 
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+      prev.includes(formattedType) ? prev.filter(t => t !== formattedType) : [...prev, formattedType]
     );
   };
 
@@ -88,11 +89,11 @@ const CategoryPage = () => {
                 <label key={type} className="filter-checkbox-label mb-2 d-flex align-center" style={{ cursor: 'pointer' }}>
                   <input 
                     type="checkbox" 
-                    checked={selectedTypes.includes(type)}
+                    checked={selectedTypes.includes(type.toLowerCase())}
                     onChange={() => handleTypeChange(type)}
                     className="me-2"
                   />
-                  <span style={{ fontSize: '0.9rem', color: selectedTypes.includes(type) ? 'var(--color-primary)' : 'inherit', fontWeight: selectedTypes.includes(type) ? '600' : '400' }}>
+                  <span style={{ fontSize: '0.9rem', color: selectedTypes.includes(type.toLowerCase()) ? 'var(--color-primary)' : 'inherit', fontWeight: selectedTypes.includes(type.toLowerCase()) ? '600' : '400' }}>
                     {type}
                   </span>
                 </label>

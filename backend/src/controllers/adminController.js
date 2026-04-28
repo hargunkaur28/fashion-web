@@ -25,6 +25,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     { $group: { _id: null, total: { $sum: '$totalAmount' } } },
   ]);
   const totalRevenue = revenueResult[0]?.total || 0;
+  
+  const returnRequestsCount = await Order.countDocuments({ status: 'return_requested' });
 
   const recentOrders = await Order.find({})
     .populate('user', 'name email')
@@ -49,7 +51,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     { $limit: 5 },
   ]);
 
-  res.json({ success: true, totalUsers, totalProducts, totalOrders, totalRevenue, recentOrders, lowStockProducts, last30Days, topProducts });
+  res.json({ success: true, totalUsers, totalProducts, totalOrders, totalRevenue, returnRequestsCount, recentOrders, lowStockProducts, last30Days, topProducts });
 });
 
 module.exports = { getAllUsers, deleteUser, getDashboardStats };

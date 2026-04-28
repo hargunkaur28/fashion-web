@@ -30,7 +30,7 @@ const productSchema = new mongoose.Schema(
     subGender: { type: String, enum: ['boys', 'girls', 'unisex', 'none'], default: 'none' },
     type: {
       type: String,
-      enum: ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'other'],
+      enum: ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'indo-western', 'plus-size', 'other'],
       required: true,
     },
 

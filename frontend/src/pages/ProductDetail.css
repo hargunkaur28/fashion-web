@@ -93,7 +93,7 @@
 .detail-price {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--color-secondary);
+  color: var(--color-primary);
 }
 
 .detail-original-price {
@@ -158,7 +158,8 @@
 
 .size-btn.active {
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: white;
+  background: linear-gradient(135deg, var(--color-primary), #a02258);
   box-shadow: 0 0 0 1px var(--color-primary);
 }
 
@@ -195,8 +196,8 @@
 }
 
 .color-btn.active {
-  box-shadow: 0 0 0 2px var(--color-primary);
-  transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-primary-light);
+  transform: scale(1.15);
 }
 
 .action-buttons {
@@ -209,6 +210,8 @@
   padding: 1rem;
   font-size: 1.1rem;
   font-weight: 700;
+  background: linear-gradient(135deg, var(--color-primary), #a02258);
+  border-radius: var(--radius-sm);
 }
 
 .wishlist-action-btn {
@@ -220,6 +223,7 @@
 .wishlist-action-btn.wishlisted {
   border-color: var(--color-primary);
   color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .services-box {

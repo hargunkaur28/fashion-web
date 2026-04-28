@@ -41,7 +41,7 @@
   background: var(--color-primary);
   color: white;
   border-color: var(--color-primary);
-  box-shadow: 0 4px 12px rgba(169, 132, 120, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 26, 74, 0.3);
 }
 
 .step-label {

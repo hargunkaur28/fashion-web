@@ -95,4 +95,46 @@ const getOrderStats = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { createOrder, getMyOrders, getOrderById, getAllOrders, updateOrderStatus, getOrderStats };
+// @POST /api/v1/orders/track
+const trackOrder = asyncHandler(async (req, res) => {
+  const { orderId, email } = req.body;
+  if (!orderId || !email) { res.status(400); throw new Error('Order ID and Email are required'); }
+  
+  // Clean the order ID (remove spaces, leading #, and force uppercase)
+  const cleanOrderId = orderId.replace(/^#/, '').trim().toUpperCase();
+  
+  // Try to find the order by orderNumber and populate user
+  const order = await Order.findOne({ orderNumber: cleanOrderId }).populate('user', 'email name');
+  if (!order) { res.status(404); throw new Error('Order not found with that ID'); }
+
+  // Verify email matches
+  if (order.user.email.toLowerCase() !== email.toLowerCase()) {
+    res.status(403); throw new Error('Email does not match our records for this order');
+  }
+
+  res.json({ success: true, order });
+});
+
+// @PUT /api/v1/orders/:id/return
+const returnOrder = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+  if (!order) { res.status(404); throw new Error('Order not found'); }
+  
+  // Verify order belongs to user
+  if (order.user.toString() !== req.user._id.toString()) {
+    res.status(403); throw new Error('Not authorized to return this order');
+  }
+
+  // Only delivered orders can be returned
+  if (order.status !== 'delivered') {
+    res.status(400); throw new Error('Only delivered orders can be returned');
+  }
+
+  order.status = 'return_requested';
+  order.statusHistory.push({ status: 'return_requested', note: 'Return requested by customer pending admin approval' });
+  await order.save();
+
+  res.json({ success: true, order });
+});
+
+module.exports = { createOrder, getMyOrders, getOrderById, getAllOrders, updateOrderStatus, getOrderStats, trackOrder, returnOrder };

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Package, MapPin, CalendarDays, DollarSign, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Package, MapPin, CalendarDays, DollarSign, ChevronDown, ArrowLeft, Download } from 'lucide-react';
 import api from '../utils/api';
 import { formatPrice } from '../utils/formatPrice';
+import { generateInvoicePDF } from '../utils/generateInvoice';
 import toast from 'react-hot-toast';
 import './Cart.css';
 
@@ -12,6 +13,7 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -43,6 +45,8 @@ const Orders = () => {
       shipped: '#06b6d4',
       delivered: '#10b981',
       cancelled: '#ef4444',
+      return_requested: '#f97316',
+      return_rejected: '#dc2626',
       returned: '#6b7280',
     };
     return colors[status] || '#6b7280';
@@ -56,9 +60,35 @@ const Orders = () => {
       shipped: '🚚',
       delivered: '📦',
       cancelled: '❌',
+      return_requested: '⏳',
+      return_rejected: '⚠️',
       returned: '↩️',
     };
     return icons[status] || '•';
+  };
+
+  const handleDownloadInvoice = async (order) => {
+    setDownloadingInvoiceId(order._id);
+    try {
+      await generateInvoicePDF(order);
+      toast.success('Invoice downloaded successfully!');
+    } catch (err) {
+      toast.error(err.message || 'Failed to download invoice');
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
+  };
+
+  const handleReturnItem = async (orderId) => {
+    if (window.confirm('Are you sure you want to request a return for this order?')) {
+      try {
+        await api.put(`/orders/${orderId}/return`);
+        toast.success('Return requested successfully');
+        fetchOrders();
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to request return');
+      }
+    }
   };
 
   if (loading) {
@@ -253,8 +283,35 @@ const Orders = () => {
 
                 {/* Actions */}
                 <div className="d-flex gap-2">
-                  <button className="btn btn-outline flex-1">Need Help?</button>
-                  <button className="btn btn-outline flex-1">Download Invoice</button>
+                  {order.status === 'delivered' && (
+                    <button 
+                      className="btn btn-outline flex-1 text-danger" 
+                      onClick={() => handleReturnItem(order._id)}
+                      style={{ borderColor: '#ef4444', color: '#ef4444' }}
+                    >
+                      Request Return
+                    </button>
+                  )}
+                  <Link to="/contact" className="btn btn-outline flex-1" style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                    Need Help?
+                  </Link>
+                  <button
+                    className="btn btn-outline flex-1"
+                    onClick={() => handleDownloadInvoice(order)}
+                    disabled={downloadingInvoiceId === order._id}
+                  >
+                    {downloadingInvoiceId === order._id ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <Download size={16} className="me-2" style={{ display: 'inline' }} />
+                        Download Invoice
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
