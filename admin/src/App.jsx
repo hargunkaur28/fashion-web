@@ -73,7 +73,7 @@ const App = () => {
     <div className="admin-layout">
       <aside className="admin-sidebar">
         <div className="sidebar-header">
-          <span>VOGUE</span>ADMIN
+          <span>DIMPLE</span>ADMIN
         </div>
         <nav className="sidebar-nav">
           {navs.map(nav => (
