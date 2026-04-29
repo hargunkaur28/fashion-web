@@ -121,21 +121,21 @@ const Home = () => {
               <div className="collection-bg"></div>
               <img src="https://m.media-amazon.com/images/I/61MSZSuQemL._AC_UY1100_.jpg" alt="Ethnic Wear" />
             </div>
-            <h3 className="collection-title">Ethnic<br/>Collection</h3>
+            <h3 className="collection-title">Ethnic Collection</h3>
           </Link>
           <Link to="/category/women" className="collection-card">
             <div className="collection-image-wrap">
               <div className="collection-bg"></div>
               <img src="https://imagescdn.allensolly.com/img/app/product/9/918059-11462738.jpg?auto=format&w=390" alt="Indo Western" />
             </div>
-            <h3 className="collection-title">Indo<br/>Western</h3>
+            <h3 className="collection-title">Indo Western</h3>
           </Link>
           <Link to="/category/men" className="collection-card">
             <div className="collection-image-wrap">
               <div className="collection-bg"></div>
               <img src="https://blackberrys.com/cdn/shop/files/Casual_Dusty_Pink_Textured_Blazer_Ken-EJCC2311P3BS24FL-image3.jpg?v=1707372476&width=1600" alt="Party Wear" />
             </div>
-            <h3 className="collection-title">Party<br/>Wear</h3>
+            <h3 className="collection-title">Party Wear</h3>
           </Link>
         </div>
       </section>

@@ -1,6 +1,7 @@
 .product-card {
   display: block;
   transition: all var(--transition-normal);
+  min-width: 0;
 }
 
 .product-card:hover {

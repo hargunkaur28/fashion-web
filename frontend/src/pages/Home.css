@@ -384,7 +384,7 @@
 .reviews-carousel-track {
   display: flex;
   gap: 1.5rem;
-  animation: scroll-reviews 40s linear infinite;
+  animation: scroll-reviews 15s linear infinite;
 }
 
 @keyframes scroll-reviews {
@@ -470,7 +470,7 @@
 .carousel-track {
   display: flex;
   gap: 1.5rem;
-  animation: scroll-carousel 30s linear infinite;
+  animation: scroll-carousel 10s linear infinite;
 }
 
 @keyframes scroll-carousel {
@@ -575,13 +575,26 @@
   }
 
   .collections-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  
+  .collections-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .collection-card {
+    flex: 0 0 75%;
+    scroll-snap-align: center;
   }
 
   .collection-image-wrap {
-    aspect-ratio: auto;
-    height: 280px;
+    aspect-ratio: 4/5;
+    height: auto;
   }
 
   .collection-title {
@@ -589,8 +602,21 @@
   }
 
   .category-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    overflow-x: auto;
     gap: 1rem;
+    padding-bottom: 1.5rem;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .category-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-card {
+    flex: 0 0 75%;
+    scroll-snap-align: center;
   }
 
   .section-title {
