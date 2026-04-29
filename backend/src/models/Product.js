@@ -14,6 +14,7 @@ const reviewSchema = new mongoose.Schema(
     name: { type: String, required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String },
+    photos: [{ type: String }],
   },
   { timestamps: true }
 );
@@ -30,7 +31,7 @@ const productSchema = new mongoose.Schema(
     subGender: { type: String, enum: ['boys', 'girls', 'unisex', 'none'], default: 'none' },
     type: {
       type: String,
-      enum: ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'indo-western', 'plus-size', 'other'],
+      enum: ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'indo-western', 'party-wear', 'plus-size', 'other'],
       required: true,
     },
 

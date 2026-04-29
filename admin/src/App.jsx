@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, Users, ShoppingCart, LogOut, Tags } from 'lucide-react';
+import { LayoutDashboard, Package, Users, ShoppingCart, LogOut, Tags, Ticket } from 'lucide-react';
 import api from './utils/api';
 import toast from 'react-hot-toast';
 import Dashboard from './pages/Dashboard';
@@ -9,6 +9,7 @@ import ProductEdit from './pages/ProductEdit';
 import OrdersManagement from './pages/OrdersManagement';
 import CategoriesManagement from './pages/CategoriesManagement';
 import UsersManagement from './pages/UsersManagement';
+import CouponsManagement from './pages/CouponsManagement';
 
 // Login Page
 const Login = ({ setAuth }) => {
@@ -66,6 +67,7 @@ const App = () => {
     { name: 'Products', path: '/products', icon: <Package size={20}/> },
     { name: 'Orders', path: '/orders', icon: <ShoppingCart size={20}/> },
     { name: 'Categories', path: '/categories', icon: <Tags size={20}/> },
+    { name: 'Coupons', path: '/coupons', icon: <Ticket size={20}/> },
     { name: 'Users', path: '/users', icon: <Users size={20}/> },
   ];
 
@@ -97,6 +99,7 @@ const App = () => {
             <Route path="/products" element={<ProductsManagement />} />
             <Route path="/orders" element={<OrdersManagement />} />
             <Route path="/categories" element={<CategoriesManagement />} />
+            <Route path="/coupons" element={<CouponsManagement />} />
             <Route path="/users" element={<UsersManagement />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

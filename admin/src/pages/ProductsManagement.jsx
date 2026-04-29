@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Edit, Plus, X, Upload, Link as LinkIcon } from 'lucide-react';
+import { Trash2, Edit, Plus, X, Upload, Link as LinkIcon, Eye } from 'lucide-react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import '../pages/admin-pages.css';
@@ -10,6 +10,8 @@ const ProductsManagement = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showStockModal, setShowStockModal] = useState(false);
+  const [selectedProductStock, setSelectedProductStock] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageUploadMode, setImageUploadMode] = useState('file');
   const [imageUrl, setImageUrl] = useState('');
@@ -37,7 +39,7 @@ const ProductsManagement = () => {
     sku: '',
   });
 
-  const typeOptions = ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'indo-western', 'plus-size', 'other'];
+  const typeOptions = ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'indo-western', 'party-wear', 'plus-size', 'other'];
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36'];
   const colorOptions = [
     { name: 'Black', hex: '#000000' },
@@ -307,14 +309,14 @@ const ProductsManagement = () => {
                   <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>Images: <strong>{form.images.length}</strong></p>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {form.images.map((img, i) => (
-                      <div key={i} style={{ position: 'relative', width: '90px' }}>
-                        <img src={img} alt="preview" style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '0.25rem', border: '1px solid #ddd' }} onError={(e) => e.target.src = 'https://via.placeholder.com/90?text=Invalid'} />
+                      <div key={i} className="image-preview">
+                        <img src={img} alt="preview" onError={(e) => e.target.src = 'https://via.placeholder.com/90?text=Invalid'} />
                         <button
                           type="button"
                           onClick={() => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) })}
-                          style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '22px', height: '22px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          className="image-remove-btn"
                         >
-                          ×
+                          <X size={14} />
                         </button>
                       </div>
                     ))}
@@ -485,7 +487,18 @@ const ProductsManagement = () => {
                             <span className="color-preview" style={{ backgroundColor: v.colorHex }}></span>
                             {v.color}
                           </td>
-                          <td>{v.stock}</td>
+                          <td>
+                            <input 
+                              type="number" 
+                              value={v.stock} 
+                              onChange={(e) => {
+                                const newVariants = [...form.variants];
+                                newVariants[i].stock = Number(e.target.value);
+                                setForm({ ...form, variants: newVariants });
+                              }}
+                              style={{ width: '70px', padding: '0.25rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                            />
+                          </td>
                           <td>{v.sku}</td>
                           <td style={{ textAlign: 'center' }}>
                             <button type="button" onClick={() => removeVariant(i)} className="btn-small btn-danger">
@@ -590,7 +603,29 @@ const ProductsManagement = () => {
                   <td>{p.gender}/{p.type}</td>
                   <td>₹{p.originalPrice}</td>
                   <td>{p.discount}%</td>
-                  <td>{p.variants?.length || 0}</td>
+                  <td>
+                    <button 
+                      onClick={() => { setSelectedProductStock(p); setShowStockModal(true); }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.4rem', 
+                        background: 'none', 
+                        border: 'none', 
+                        color: '#2563eb', 
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '4px',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseOver={(e) => e.target.style.background = '#eff6ff'}
+                      onMouseOut={(e) => e.target.style.background = 'none'}
+                    >
+                      <Eye size={14} /> {p.variants?.length || 0} variants
+                    </button>
+                  </td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button onClick={() => handleEdit(p)} className="btn-small" title="Edit">
@@ -607,6 +642,101 @@ const ProductsManagement = () => {
           </tbody>
         </table>
       </div>
+      {/* Stock Details Modal */}
+      {showStockModal && selectedProductStock && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }} onClick={() => setShowStockModal(false)}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '0.75rem',
+            width: '100%',
+            maxWidth: '500px',
+            maxHeight: '80vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#111827' }}>Stock Details</h3>
+              <button onClick={() => setShowStockModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <p style={{ margin: 0, fontWeight: 600, color: '#374151' }}>{selectedProductStock.name}</p>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#6b7280' }}>{selectedProductStock.brand}</p>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ backgroundColor: '#f9fafb' }}>
+                  <tr>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase' }}>Size</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase' }}>Color</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase' }}>Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedProductStock.variants.map((v, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#111827' }}>{v.size}</td>
+                      <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#111827' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: v.colorHex, border: '1px solid #e5e7eb' }}></div>
+                          {v.color}
+                        </div>
+                      </td>
+                      <td style={{ 
+                        padding: '0.75rem', 
+                        fontSize: '0.875rem', 
+                        textAlign: 'right', 
+                        fontWeight: v.stock <= 5 ? 700 : 500,
+                        color: v.stock <= 5 ? '#ef4444' : '#111827'
+                      }}>
+                        {v.stock}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ padding: '1.25rem 1.5rem', backgroundColor: '#f9fafb', borderTop: '1px solid #e5e7eb', textAlign: 'right' }}>
+              <button 
+                onClick={() => setShowStockModal(false)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'white',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#374151',
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

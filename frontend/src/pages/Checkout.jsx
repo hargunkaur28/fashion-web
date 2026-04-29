@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../utils/formatPrice';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import { states, indiaData } from '../utils/indiaData';
 import './Cart.css';
 import './Checkout.css';
 
@@ -29,6 +30,54 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [discount, setDiscount] = useState(0);
   const [coupon, setCoupon] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState(-1);
+  const [saveAddressToProfile, setSaveAddressToProfile] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data } = await api.get('/auth/me');
+        if (data.user.addresses?.length > 0) {
+          setSavedAddresses(data.user.addresses);
+          // Auto-select default address if available
+          const defaultIdx = data.user.addresses.findIndex(a => a.isDefault);
+          if (defaultIdx !== -1) {
+            handleAddressSelect(defaultIdx, data.user.addresses);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile', err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleAddressSelect = (index, addresses = savedAddresses) => {
+    setSelectedAddressIndex(index);
+    if (index === -1) {
+      setShipping({
+        fullName: user?.name || '',
+        phone: '',
+        line1: '',
+        line2: '',
+        city: '',
+        state: '',
+        pincode: '',
+      });
+    } else {
+      const addr = addresses[index];
+      setShipping({
+        fullName: addr.fullName,
+        phone: addr.phone,
+        line1: addr.line1,
+        line2: addr.line2 || '',
+        city: addr.city,
+        state: addr.state,
+        pincode: addr.pincode,
+      });
+    }
+  };
 
   const shipping_charge = totalAmount > 1000 ? 0 : 99;
   const finalAmount = totalAmount - discount + shipping_charge;
@@ -49,15 +98,18 @@ const Checkout = () => {
     return true;
   };
 
-  const applyCoupon = () => {
-    if (coupon === 'SAVE10') {
-      setDiscount(Math.round(totalAmount * 0.1));
-      toast.success('Coupon applied! 10% discount');
-    } else if (coupon === 'SAVE20') {
-      setDiscount(Math.round(totalAmount * 0.2));
-      toast.success('Coupon applied! 20% discount');
-    } else {
-      toast.error('Invalid coupon code');
+  const applyCoupon = async () => {
+    if (!coupon.trim()) return;
+    try {
+      const { data } = await api.post('/coupons/validate', { 
+        code: coupon, 
+        cartTotal: totalAmount 
+      });
+      setDiscount(data.coupon.discountAmount);
+      toast.success(`Coupon applied! ${data.coupon.discountType === 'percentage' ? data.coupon.discountValue + '%' : formatPrice(data.coupon.discountValue)} discount`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Invalid coupon code');
+      setDiscount(0);
     }
   };
 
@@ -66,11 +118,16 @@ const Checkout = () => {
 
     setLoading(true);
     try {
+      // Save address if requested
+      if (selectedAddressIndex === -1 && saveAddressToProfile) {
+        await api.post('/auth/address', shipping);
+      }
+
       const orderData = {
         items: cart.items.map(item => ({
           product: item.product._id,
           name: item.product.name,
-          thumbnail: item.product.thumbnail,
+          thumbnail: item.product.images?.[0] || item.product.thumbnail,
           variantSize: item.variantSize,
           variantColor: item.variantColor,
           quantity: item.quantity,
@@ -150,6 +207,25 @@ const Checkout = () => {
                   Shipping Details
                 </h2>
 
+                {savedAddresses.length > 0 && (
+                  <div className="form-group mb-4">
+                    <label className="form-label">Select Saved Address</label>
+                    <select 
+                      className="form-select" 
+                      value={selectedAddressIndex}
+                      onChange={(e) => handleAddressSelect(Number(e.target.value))}
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--color-border)' }}
+                    >
+                      <option value="-1">Enter a new address</option>
+                      {savedAddresses.map((addr, idx) => (
+                        <option key={idx} value={idx}>
+                          {addr.fullName}, {addr.city} ({addr.pincode})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="form-group mb-4">
                   <label className="form-label">Full Name *</label>
                   <input
@@ -158,6 +234,7 @@ const Checkout = () => {
                     value={shipping.fullName}
                     onChange={(e) => setShipping({ ...shipping, fullName: e.target.value })}
                     className="form-input"
+                    disabled={selectedAddressIndex !== -1}
                   />
                 </div>
 
@@ -169,6 +246,7 @@ const Checkout = () => {
                     value={shipping.phone}
                     onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
                     className="form-input"
+                    disabled={selectedAddressIndex !== -1}
                   />
                 </div>
 
@@ -180,6 +258,7 @@ const Checkout = () => {
                     value={shipping.line1}
                     onChange={(e) => setShipping({ ...shipping, line1: e.target.value })}
                     className="form-input"
+                    disabled={selectedAddressIndex !== -1}
                   />
                 </div>
 
@@ -191,33 +270,49 @@ const Checkout = () => {
                     value={shipping.line2}
                     onChange={(e) => setShipping({ ...shipping, line2: e.target.value })}
                     className="form-input"
+                    disabled={selectedAddressIndex !== -1}
                   />
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">City *</label>
-                    <input
-                      type="text"
-                      placeholder="City"
-                      value={shipping.city}
-                      onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+                    <label className="form-label">State *</label>
+                    <select
+                      value={shipping.state}
+                      onChange={(e) => setShipping({ ...shipping, state: e.target.value, city: '' })}
                       className="form-input"
-                    />
+                      disabled={selectedAddressIndex !== -1}
+                    >
+                      <option value="">Select State</option>
+                      {states.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">State *</label>
-                    <input
-                      type="text"
-                      placeholder="State"
-                      value={shipping.state}
-                      onChange={(e) => setShipping({ ...shipping, state: e.target.value })}
-                      className="form-input"
-                    />
+                    <label className="form-label">City *</label>
+                    {shipping.state && indiaData[shipping.state] ? (
+                      <select
+                        value={shipping.city}
+                        onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+                        className="form-input"
+                        disabled={selectedAddressIndex !== -1}
+                      >
+                        <option value="">Select City</option>
+                        {indiaData[shipping.state].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="City"
+                        value={shipping.city}
+                        onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+                        className="form-input"
+                        disabled={selectedAddressIndex !== -1}
+                      />
+                    )}
                   </div>
                 </div>
 
-                <div className="form-group mb-5">
+                <div className="form-group mb-4">
                   <label className="form-label">Pincode *</label>
                   <input
                     type="text"
@@ -225,8 +320,22 @@ const Checkout = () => {
                     value={shipping.pincode}
                     onChange={(e) => setShipping({ ...shipping, pincode: e.target.value })}
                     className="form-input"
+                    disabled={selectedAddressIndex !== -1}
                   />
                 </div>
+
+                {selectedAddressIndex === -1 && (
+                  <div className="form-group mb-5">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={saveAddressToProfile} 
+                        onChange={(e) => setSaveAddressToProfile(e.target.checked)} 
+                      />
+                      Save this address for future orders
+                    </label>
+                  </div>
+                )}
 
                 <button
                   onClick={() => validateShipping() && setStep(2)}

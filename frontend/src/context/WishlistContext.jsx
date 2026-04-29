@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
@@ -8,6 +8,14 @@ const WishlistContext = createContext(null);
 export const WishlistProvider = ({ children }) => {
   const { user, isAuth } = useAuth();
   const [wishlist, setWishlist] = useState(user?.wishlist || []);
+
+  useEffect(() => {
+    if (user?.wishlist) {
+      setWishlist(user.wishlist);
+    } else if (!isAuth) {
+      setWishlist([]);
+    }
+  }, [user, isAuth]);
 
   const toggle = async (productId) => {
     if (!isAuth) { toast.error('Please login to use wishlist'); return; }

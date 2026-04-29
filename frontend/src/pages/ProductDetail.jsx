@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Heart, ShoppingBag, Truck, RotateCcw } from 'lucide-react';
+import { Heart, ShoppingBag, Truck, RotateCcw, Star } from 'lucide-react';
 import api from '../utils/api';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -21,7 +21,9 @@ const ProductDetail = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const { data } = await api.get(`/products/slug/${slug}`);
+        const isMongoId = /^[0-9a-fA-F]{24}$/.test(slug);
+        const url = isMongoId ? `/products/${slug}` : `/products/slug/${slug}`;
+        const { data } = await api.get(url);
         setProduct(data.product);
         if (data.product.variants?.length > 0) {
           const firstInStock = data.product.variants.find(v => v.stock > 0) || data.product.variants[0];
@@ -191,6 +193,55 @@ const ProductDetail = () => {
             </ul>
           </div>
         </div>
+      </div>
+
+      {/* Reviews Section */}
+      <div className="product-reviews-section">
+        <h3 className="reviews-title">Customer Reviews ({product.numReviews})</h3>
+        
+        {product.reviews && product.reviews.length === 0 ? (
+          <p className="text-muted text-center py-4">No reviews yet. Only customers who have received this item can leave a review.</p>
+        ) : (
+          <div className="reviews-list">
+            {product.reviews?.map((review) => (
+              <div key={review._id} className="review-item">
+                <div className="d-flex align-center justify-between mb-2">
+                  <div className="font-weight-bold" style={{ fontWeight: '600' }}>{review.name} <span className="text-success small ms-2">✓ Verified Purchase</span></div>
+                  <div className="text-muted small">
+                    {new Date(review.createdAt).toLocaleDateString('en-IN', {
+                      day: '2-digit', month: 'short', year: 'numeric'
+                    })}
+                  </div>
+                </div>
+                <div className="d-flex mb-2">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Star 
+                      key={star} 
+                      size={14} 
+                      fill={star <= review.rating ? "#f59e0b" : "none"}
+                      color={star <= review.rating ? "#f59e0b" : "#d1d5db"} 
+                    />
+                  ))}
+                </div>
+                {review.comment && <p className="mb-3 text-muted">{review.comment}</p>}
+                
+                {review.photos && review.photos.length > 0 && (
+                  <div className="d-flex gap-2 flex-wrap mt-2">
+                    {review.photos.map((photo, i) => (
+                      <a href={photo} target="_blank" rel="noreferrer" key={i}>
+                        <img 
+                          src={photo} 
+                          alt="Review attachment" 
+                          style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #eee' }} 
+                        />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

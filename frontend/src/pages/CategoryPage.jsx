@@ -1,20 +1,44 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
 import ProductCard from '../components/ProductCard';
 import './CategoryPage.css';
 
 const CategoryPage = () => {
   const { gender } = useParams();
+  const [searchParams] = useSearchParams();
+  const typeParam = searchParams.get('type');
+  const searchQuery = searchParams.get('search');
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState('newest');
   
   // Filter States
-  const [selectedTypes, setSelectedTypes] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState(typeParam ? [typeParam] : []);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [selectedGender, setSelectedGender] = useState(''); 
+  const [selectedSubGender, setSelectedSubGender] = useState('');
 
-  const categories = ['Shirt', 'T-Shirt', 'Jeans', 'Kurta', 'Ethnic', 'Indo-Western', 'Plus-Size', 'Dress'];
+  const shopForOptions = gender === 'kids' ? [
+    { label: 'All Kids', gender: 'kids', subGender: '' },
+    { label: 'Boys', gender: 'kids', subGender: 'boys' },
+    { label: 'Girls', gender: 'kids', subGender: 'girls' },
+  ] : [
+    { label: 'All', gender: '', subGender: '' },
+    { label: 'Men', gender: 'men', subGender: '' },
+    { label: 'Women', gender: 'women', subGender: '' },
+    { label: 'Boys', gender: 'kids', subGender: 'boys' },
+    { label: 'Girls', gender: 'kids', subGender: 'girls' },
+  ];
+
+  const categories = ['Shirt', 'T-Shirt', 'Jeans', 'Kurta', 'Ethnic', 'Indo-Western', 'Party-Wear', 'Plus-Size', 'Dress'];
+
+  useEffect(() => {
+    if (typeParam) {
+      setSelectedTypes([typeParam]);
+    }
+  }, [typeParam]);
   const priceOptions = [
     { label: 'All Prices', min: '', max: '' },
     { label: 'Under ₹1,000', min: '0', max: '1000' },
@@ -27,12 +51,16 @@ const CategoryPage = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        let query = gender !== 'all' ? `gender=${gender}&` : '';
+        let query = (selectedGender) ? `gender=${selectedGender}&` : (gender !== 'all' ? `gender=${gender}&` : '');
+        if (selectedSubGender) query += `subGender=${selectedSubGender}&`;
+        
         query += `sort=${sort}&limit=50&`;
         
         if (selectedTypes.length > 0) {
           query += `type=${selectedTypes.join(',')}&`;
         }
+        
+        if (searchQuery) query += `search=${searchQuery}&`;
         
         if (priceRange.min) query += `minPrice=${priceRange.min}&`;
         if (priceRange.max) query += `maxPrice=${priceRange.max}&`;
@@ -46,7 +74,7 @@ const CategoryPage = () => {
       }
     };
     fetchProducts();
-  }, [gender, sort, selectedTypes, priceRange]);
+  }, [gender, sort, selectedTypes, priceRange, selectedGender, selectedSubGender, searchQuery]);
 
   const handleTypeChange = (type) => {
     const formattedType = type.toLowerCase();
@@ -55,10 +83,17 @@ const CategoryPage = () => {
     );
   };
 
-  const genderTitle = gender === 'men' ? "Men's Fashion" 
+  let genderTitle = gender === 'men' ? "Men's Fashion" 
                     : gender === 'women' ? "Women's Fashion" 
                     : gender === 'kids' ? "Kids' Fashion" 
                     : "All Styles";
+
+  if (searchQuery) {
+    genderTitle = `Search results for "${searchQuery}"`;
+  } else if (selectedTypes.length === 1 && gender === 'all') {
+    const typeName = selectedTypes[0];
+    genderTitle = typeName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + ' Collection';
+  }
 
   return (
     <div className="container mt-4 mb-5 fade-in">
@@ -82,6 +117,28 @@ const CategoryPage = () => {
       <div className="category-layout">
         {/* Sidebar Filters */}
         <aside className="filters-sidebar reveal active">
+          {(gender === 'all' || gender === 'kids') && (
+            <div className="filter-group mb-5">
+              <h3 className="filter-title mb-3 font-heading">Shop For</h3>
+              <div className="filter-list">
+                {shopForOptions.map(opt => (
+                  <label key={opt.label} className="filter-checkbox-label mb-2 d-flex align-center" style={{ cursor: 'pointer' }}>
+                    <input 
+                      type="radio" 
+                      name="shopFor"
+                      checked={selectedGender === opt.gender && selectedSubGender === opt.subGender}
+                      onChange={() => { setSelectedGender(opt.gender); setSelectedSubGender(opt.subGender); }}
+                      className="me-2"
+                    />
+                    <span style={{ fontSize: '0.9rem', color: (selectedGender === opt.gender && selectedSubGender === opt.subGender) ? 'var(--color-primary)' : 'inherit', fontWeight: (selectedGender === opt.gender && selectedSubGender === opt.subGender) ? '600' : '400' }}>
+                      {opt.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="filter-group mb-5">
             <h3 className="filter-title mb-3 font-heading">Sub Categories</h3>
             <div className="filter-list">
@@ -123,7 +180,12 @@ const CategoryPage = () => {
 
           <button 
             className="btn btn-outline w-100 btn-sm"
-            onClick={() => { setSelectedTypes([]); setPriceRange({ min: '', max: '' }); }}
+            onClick={() => { 
+              setSelectedTypes([]); 
+              setPriceRange({ min: '', max: '' }); 
+              setSelectedGender('');
+              setSelectedSubGender('');
+            }}
             style={{ fontSize: '0.75rem', letterSpacing: '1px' }}
           >
             CLEAR ALL FILTERS

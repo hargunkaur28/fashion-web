@@ -116,21 +116,21 @@ const Home = () => {
           <p className="section-subtitle text-center">Handpicked styles for every occasion</p>
         </div>
         <div className="collections-grid">
-          <Link to="/category/women" className="collection-card">
+          <Link to="/category/all?type=ethnic" className="collection-card">
             <div className="collection-image-wrap">
               <div className="collection-bg"></div>
-              <img src="https://m.media-amazon.com/images/I/61MSZSuQemL._AC_UY1100_.jpg" alt="Ethnic Wear" />
+              <img src="https://www.inddus.in/cdn/shop/products/floral-printed-thread-work-fit-flare-ethnic-dress-762569.jpg?v=1752666414" alt="Ethnic Wear" />
             </div>
             <h3 className="collection-title">Ethnic Collection</h3>
           </Link>
-          <Link to="/category/women" className="collection-card">
+          <Link to="/category/all?type=indo-western" className="collection-card">
             <div className="collection-image-wrap">
               <div className="collection-bg"></div>
-              <img src="https://imagescdn.allensolly.com/img/app/product/9/918059-11462738.jpg?auto=format&w=390" alt="Indo Western" />
+              <img src="https://sunantamadaan.com/cdn/shop/files/Pink_Pre_Draped_Skirt_Dress.jpg?v=1737817649&width=1445" alt="Indo Western" />
             </div>
             <h3 className="collection-title">Indo Western</h3>
           </Link>
-          <Link to="/category/men" className="collection-card">
+          <Link to="/category/all?type=party-wear" className="collection-card">
             <div className="collection-image-wrap">
               <div className="collection-bg"></div>
               <img src="https://blackberrys.com/cdn/shop/files/Casual_Dusty_Pink_Textured_Blazer_Ken-EJCC2311P3BS24FL-image3.jpg?v=1707372476&width=1600" alt="Party Wear" />

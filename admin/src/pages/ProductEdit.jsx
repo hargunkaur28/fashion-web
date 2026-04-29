@@ -36,7 +36,7 @@ const ProductEdit = () => {
     sku: '',
   });
 
-  const typeOptions = ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'indo-western', 'plus-size', 'other'];
+  const typeOptions = ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'indo-western', 'party-wear', 'plus-size', 'other'];
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36'];
   const colorOptions = [
     { name: 'Black', hex: '#000000' },
@@ -274,10 +274,9 @@ const ProductEdit = () => {
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
-                    className="btn-small"
-                    style={{ position: 'absolute', top: '0.5rem', right: '0.5rem' }}
+                    className="image-remove-btn"
                   >
-                    <X size={16} />
+                    <X size={14} />
                   </button>
                 </div>
               ))}
@@ -535,7 +534,18 @@ const ProductEdit = () => {
                           {variant.color}
                         </span>
                       </td>
-                      <td>{variant.stock}</td>
+                      <td>
+                        <input 
+                          type="number" 
+                          value={variant.stock} 
+                          onChange={(e) => {
+                            const newVariants = [...form.variants];
+                            newVariants[index].stock = Number(e.target.value);
+                            setForm({ ...form, variants: newVariants });
+                          }}
+                          style={{ width: '70px', padding: '0.25rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                        />
+                      </td>
                       <td>{variant.sku}</td>
                       <td>
                         <button

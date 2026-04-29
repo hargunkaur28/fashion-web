@@ -186,7 +186,7 @@
 
 .collection-image-wrap {
   position: relative;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4.5;
   margin-bottom: 1.5rem;
   overflow: visible;
   border-radius: 0px;
@@ -593,7 +593,7 @@
   }
 
   .collection-image-wrap {
-    aspect-ratio: 4/5;
+    aspect-ratio: 3 / 4.5;
     height: auto;
   }
 

@@ -36,8 +36,9 @@ const Footer = () => {
               <li><Link to="/category/men">Men</Link></li>
               <li><Link to="/category/women">Women</Link></li>
               <li><Link to="/category/kids">Kids</Link></li>
-              <li><Link to="/category/women">Plus Sizes</Link></li>
-              <li><Link to="/category/women">Indo Western</Link></li>
+              <li><Link to="/category/all?type=ethnic">Ethnic</Link></li>
+              <li><Link to="/category/all?type=indo-western">Indo Western</Link></li>
+              <li><Link to="/category/all?type=party-wear">Party Wear</Link></li>
             </ul>
           </div>
 

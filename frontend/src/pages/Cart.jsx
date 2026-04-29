@@ -30,7 +30,7 @@ const Cart = () => {
           {cart.items.map(item => (
             <div key={item._id} className="cart-item card mb-3">
               <Link to={`/product/${item.product.slug}`} className="cart-item-img">
-                <img src={item.product.thumbnail || item.product.images?.[0] || 'https://via.placeholder.com/150?text=No+Image'} alt={item.product.name} />
+                <img src={item.product.images?.[0] || item.product.thumbnail || 'https://via.placeholder.com/150?text=No+Image'} alt={item.product.name} />
               </Link>
               
               <div className="cart-item-details">

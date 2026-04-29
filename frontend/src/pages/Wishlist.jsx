@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, ArrowRight, ShoppingBag, Trash2 } from 'lucide-react';
+import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../utils/formatPrice';
+import ProductCard from '../components/ProductCard';
 import api from '../utils/api';
 import './Wishlist.css';
 
@@ -62,12 +63,14 @@ const Wishlist = () => {
 
   if (products.length === 0) {
     return (
-      <div className="container py-5 text-center fade-in reveal active">
-        <div className="empty-wishlist-icon mb-4">❤️</div>
+      <div className="container py-5 text-center fade-in reveal active" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="empty-wishlist-icon mb-4" style={{ background: '#fff0f3', width: '100px', height: '100px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+          <Heart size={48} strokeWidth={1} color="#e91e63" fill="#fff0f3" />
+        </div>
         <h2 className="font-heading mb-3">Your Wishlist is Empty</h2>
-        <p className="text-muted mb-4">Add items that you like to your wishlist to review them later and buy them.</p>
-        <Link to="/category/all" className="btn btn-primary">
-          BROWSE COLLECTIONS <ArrowRight size={18} className="ms-2" />
+        <p className="text-muted mb-4" style={{ maxWidth: '500px' }}>Add items that you like to your wishlist to review them later and buy them.</p>
+        <Link to="/category/all" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>
+          BROWSE COLLECTIONS
         </Link>
       </div>
     );
@@ -75,32 +78,19 @@ const Wishlist = () => {
 
   return (
     <div className="container mt-4 mb-5 fade-in">
-      <div className="section-header mb-5">
-        <h1 className="font-heading mb-2">My Wishlist</h1>
-        <p className="text-muted">{products.length} Items</p>
+      <div className="section-header mb-5 d-flex justify-between align-center">
+        <div>
+          <h1 className="font-heading mb-2">My Wishlist</h1>
+          <p className="text-muted">{products.length} Items</p>
+        </div>
+        <Link to="/" className="btn btn-outline-primary btn-sm d-flex align-center gap-2">
+          <ArrowLeft size={18} /> BACK TO HOME
+        </Link>
       </div>
 
-      <div className="wishlist-grid">
+      <div className="grid-cols-4 mt-4">
         {products.map(product => (
-          <div key={product._id} className="wishlist-item card reveal active">
-            <button className="remove-wishlist-btn" onClick={() => handleRemove(product._id)}>
-              <Trash2 size={16} />
-            </button>
-            <Link to={`/product/${product.slug}`} className="wishlist-img-link">
-              <img src={product.thumbnail} alt={product.name} />
-            </Link>
-            <div className="wishlist-details p-3">
-              <h3 className="item-name mb-1">{product.name}</h3>
-              <div className="item-price mb-3">{formatPrice(product.price)}</div>
-              <button 
-                onClick={() => handleMoveToCart(product)}
-                className="btn btn-primary w-100 btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.6rem' }}
-              >
-                MOVE TO CART
-              </button>
-            </div>
-          </div>
+          <ProductCard key={product._id} product={product} />
         ))}
       </div>
     </div>

@@ -20,7 +20,7 @@ const upload = multer({
   },
 });
 
-// @POST /api/v1/upload (admin only)
-router.post('/', protect, adminOnly, upload.single('file'), uploadImage);
+// @POST /api/v1/upload (protected for users)
+router.post('/', protect, upload.single('file'), uploadImage);
 
 module.exports = router;

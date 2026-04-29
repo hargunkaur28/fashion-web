@@ -1,19 +1,31 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Package, MapPin, CalendarDays, DollarSign, ChevronDown, ArrowLeft, Download } from 'lucide-react';
+import { Package, MapPin, CalendarDays, DollarSign, ChevronDown, ArrowLeft, Download, Star, Upload, X, CheckCircle2, Clock, Truck, Box, AlertCircle, HelpCircle } from 'lucide-react';
 import api from '../utils/api';
 import { formatPrice } from '../utils/formatPrice';
 import { generateInvoicePDF } from '../utils/generateInvoice';
 import toast from 'react-hot-toast';
-import './Cart.css';
 
 const Orders = () => {
   const { orderId } = useParams();
   const [orders, setOrders] = useState([]);
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
+
+  // Review Modal State
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewProduct, setReviewProduct] = useState(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [reviewPhotos, setReviewPhotos] = useState([]);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+
+  // Cancellation Modal State
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelOrderId, setCancelOrderId] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -26,8 +38,6 @@ const Orders = () => {
       setOrders(data.orders);
 
       if (orderId) {
-        const order = data.orders.find(o => o._id === orderId);
-        setSelectedOrder(order);
         setExpandedOrderId(orderId);
       }
     } catch (err) {
@@ -37,34 +47,20 @@ const Orders = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: '#f59e0b',
-      confirmed: '#3b82f6',
-      processing: '#8b5cf6',
-      shipped: '#06b6d4',
-      delivered: '#10b981',
-      cancelled: '#ef4444',
-      return_requested: '#f97316',
-      return_rejected: '#dc2626',
-      returned: '#6b7280',
+  const getStatusInfo = (status) => {
+    const info = {
+      pending: { color: '#f59e0b', icon: <Clock size={16} />, label: 'Pending' },
+      confirmed: { color: '#3b82f6', icon: <CheckCircle2 size={16} />, label: 'Confirmed' },
+      processing: { color: '#8b5cf6', icon: <Package size={16} />, label: 'Processing' },
+      shipped: { color: '#06b6d4', icon: <Truck size={16} />, label: 'Shipped' },
+      delivered: { color: '#10b981', icon: <Box size={16} />, label: 'Delivered' },
+      cancelled: { color: '#ef4444', icon: <X size={16} />, label: 'Cancelled' },
+      cancel_requested: { color: '#f97316', icon: <AlertCircle size={16} />, label: 'Cancel Requested' },
+      return_requested: { color: '#f97316', icon: <Clock size={16} />, label: 'Return Requested' },
+      return_rejected: { color: '#dc2626', icon: <AlertCircle size={16} />, label: 'Return Rejected' },
+      returned: { color: '#6b7280', icon: <Package size={16} />, label: 'Returned' },
     };
-    return colors[status] || '#6b7280';
-  };
-
-  const getStatusIcon = (status) => {
-    const icons = {
-      pending: '⏳',
-      confirmed: '✓',
-      processing: '⚙️',
-      shipped: '🚚',
-      delivered: '📦',
-      cancelled: '❌',
-      return_requested: '⏳',
-      return_rejected: '⚠️',
-      returned: '↩️',
-    };
-    return icons[status] || '•';
+    return info[status] || { color: '#6b7280', icon: <Clock size={16} />, label: status };
   };
 
   const handleDownloadInvoice = async (order) => {
@@ -91,11 +87,81 @@ const Orders = () => {
     }
   };
 
+  const openReviewModal = (item) => {
+    setReviewProduct(item);
+    setRating(5);
+    setComment('');
+    setReviewPhotos([]);
+    setReviewModalOpen(true);
+  };
+
+  const closeReviewModal = () => {
+    setReviewModalOpen(false);
+    setReviewProduct(null);
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setUploadingPhotos(true);
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const { data } = await api.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        uploadedUrls.push(data.url);
+      }
+      setReviewPhotos(prev => [...prev, ...uploadedUrls]);
+      toast.success('Photos uploaded!');
+    } catch (err) {
+      toast.error('Failed to upload photos');
+    } finally {
+      setUploadingPhotos(false);
+    }
+  };
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewProduct) return;
+    try {
+      await api.post(`/products/${reviewProduct.product}/reviews`, {
+        rating,
+        comment,
+        photos: reviewPhotos
+      });
+      toast.success('Review submitted successfully!');
+      closeReviewModal();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit review');
+    }
+  };
+
+  const handleCancelRequest = async (e) => {
+    e.preventDefault();
+    if (!cancelOrderId || !cancelReason) return;
+    setCancelling(true);
+    try {
+      await api.put(`/orders/${cancelOrderId}/cancel`, { reason: cancelReason });
+      toast.success('Cancellation requested successfully! Waiting for admin approval.');
+      setCancelModalOpen(false);
+      setCancelReason('');
+      fetchOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to request cancellation');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container py-5 text-center">
-        <div className="spinner mb-3"></div>
-        <p>Loading your orders...</p>
+        <div className="spinner-glow mb-3"></div>
+        <p className="text-muted font-medium">Fetching your orders...</p>
       </div>
     );
   }
@@ -103,400 +169,356 @@ const Orders = () => {
   if (orders.length === 0) {
     return (
       <div className="container py-5 text-center">
-        <div className="empty-cart-icon mb-4">📭</div>
-        <h2>No Orders Yet</h2>
-        <p className="text-muted mt-2 mb-4">You haven't placed any orders yet. Start shopping now!</p>
-        <Link to="/" className="btn btn-primary">
-          Continue Shopping
+        <div className="empty-state-icon mb-4">🛍️</div>
+        <h2 className="font-heading">No Orders Yet</h2>
+        <p className="text-muted mt-2 mb-4">Looks like you haven't made your first purchase yet.</p>
+        <Link to="/" className="btn btn-primary px-5 py-3">
+          Explore Collection
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="container mt-4 mb-5">
-      <div className="d-flex align-center mb-4">
-        <Link to="/" className="btn btn-outline me-3">
-          <ArrowLeft size={18} />
-        </Link>
-        <h1 className="cart-title m-0">My Orders</h1>
-      </div>
-
-      <div className="orders-container">
-        {orders.map(order => (
-          <div key={order._id} className="card mb-3 order-card">
-            <div
-              className="order-header p-3 cursor-pointer d-flex justify-between align-center"
-              onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
-            >
-              <div className="order-header-left">
-                <div className="order-number mb-2">
-                  <strong>Order #{order.orderNumber || order._id.substring(0, 8).toUpperCase()}</strong>
-                  <span
-                    className="status-badge ms-2"
-                    style={{ background: getStatusColor(order.status) + '20', color: getStatusColor(order.status) }}
-                  >
-                    {getStatusIcon(order.status)} {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                  </span>
-                </div>
-                <div className="order-date text-muted">
-                  <CalendarDays size={14} className="me-1" />
-                  {new Date(order.createdAt).toLocaleDateString('en-IN', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </div>
-              </div>
-
-              <div className="order-header-right text-right">
-                <div className="order-total">
-                  <strong>{formatPrice(order.totalAmount)}</strong>
-                </div>
-                <div className="order-items text-muted">
-                  {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
-                </div>
-                <ChevronDown
-                  size={20}
-                  style={{
-                    transform: expandedOrderId === order._id ? 'rotate(180deg)' : '',
-                    transition: 'transform 0.3s ease',
-                  }}
-                />
-              </div>
+    <div className="orders-page py-5">
+      <div className="container">
+        <div className="page-header d-flex align-center justify-between mb-5">
+          <div className="d-flex align-center gap-3">
+            <Link to="/" className="btn-back">
+              <ArrowLeft size={20} />
+            </Link>
+            <div>
+              <h1 className="font-heading m-0 h2">My Orders</h1>
+              <p className="text-muted m-0 small">Manage your recent purchases and tracking</p>
             </div>
+          </div>
+        </div>
 
-            {expandedOrderId === order._id && (
-              <div className="order-details p-3 border-top">
-                {/* Items */}
-                <div className="mb-4">
-                  <h4 className="mb-2">Items</h4>
-                  {order.items.map((item, idx) => (
-                    <div key={idx} className="order-item d-flex gap-3 mb-3 p-2 bg-light rounded">
-                      {item.thumbnail && (
-                        <img src={item.thumbnail} alt={item.name} className="order-item-img" />
-                      )}
-                      <div className="order-item-info flex-1">
-                        <div className="d-flex justify-between">
-                          <h5 className="m-0">{item.name}</h5>
-                          <span className="text-muted">{formatPrice(item.price)}</span>
+        <div className="orders-list">
+          {orders.map(order => {
+            const status = getStatusInfo(order.status);
+            const isExpanded = expandedOrderId === order._id;
+
+            return (
+              <div key={order._id} className={`order-card-v2 mb-4 ${isExpanded ? 'expanded' : ''}`}>
+                <div 
+                  className="order-card-header p-4 d-flex justify-between align-center"
+                  onClick={() => setExpandedOrderId(isExpanded ? null : order._id)}
+                >
+                  <div className="header-grid">
+                    <div className="header-info-item">
+                      <span className="tiny-label">Order Number</span>
+                      <h4 className="m-0 font-bold">#{order.orderNumber}</h4>
+                    </div>
+                    <div className="header-info-item">
+                      <span className="tiny-label">Placed On</span>
+                      <div className="font-medium">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                    </div>
+                    <div className="header-info-item">
+                      <span className="tiny-label">Total Amount</span>
+                      <div className="font-bold text-primary">{formatPrice(order.totalAmount)}</div>
+                    </div>
+                    <div className="header-info-item">
+                      <span className="tiny-label">Status</span>
+                      <div className="status-pill-v2" style={{ '--status-color': status.color }}>
+                        {status.icon}
+                        <span>{status.label}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="header-actions d-flex align-center gap-3">
+                    <span className="items-count text-muted font-medium">
+                      {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+                    </span>
+                    <button className="btn-toggle">
+                      <ChevronDown size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="order-card-body">
+                  <div className="details-grid p-4">
+                    {/* Items Section */}
+                    <div className="items-section">
+                      <h5 className="section-title mb-4">Items in Order</h5>
+                      <div className="items-stack">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="order-item-row">
+                            <Link to={`/product/${item.product}`} className="item-img-box">
+                              <img src={item.thumbnail} alt={item.name} />
+                            </Link>
+                            <div className="item-info">
+                              <div className="d-flex justify-between">
+                                <Link to={`/product/${item.product}`} className="item-name">{item.name}</Link>
+                                <span className="item-price">{formatPrice(item.price)}</span>
+                              </div>
+                              <div className="item-meta">
+                                <span>Size: <b>{item.variantSize}</b></span>
+                                <span>Color: <b>{item.variantColor}</b></span>
+                                <span>Qty: <b>{item.quantity}</b></span>
+                              </div>
+                              {order.status === 'delivered' && (
+                                <button className="btn-review-inline" onClick={() => openReviewModal(item)}>
+                                  <Star size={12} /> Write a Review
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tracking Section */}
+                    <div className="tracking-section">
+                      <h5 className="section-title mb-4">Track Order</h5>
+                      <div className="modern-timeline">
+                        {order.statusHistory?.map((h, i) => {
+                          const hInfo = getStatusInfo(h.status);
+                          return (
+                            <div key={i} className="timeline-node">
+                              <div className="node-marker" style={{ backgroundColor: hInfo.color }}>
+                                {hInfo.icon}
+                              </div>
+                              <div className="node-content">
+                                <div className="node-label" style={{ color: hInfo.color }}>{hInfo.label}</div>
+                                <div className="node-time">
+                                  {new Date(h.timestamp).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                                {h.note && <div className="node-note">{h.note}</div>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="address-payment-summary mt-5">
+                        <div className="summary-card">
+                          <div className="summary-title"><MapPin size={14}/> Shipping Address</div>
+                          <div className="summary-text">
+                            <strong>{order.shippingAddress.fullName}</strong><br/>
+                            {order.shippingAddress.line1}, {order.shippingAddress.line2}<br/>
+                            {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.pincode}<br/>
+                            Phone: {order.shippingAddress.phone}
+                          </div>
                         </div>
-                        <div className="text-muted mt-1 small">
-                          <span>Size: {item.variantSize}</span>
-                          <span className="mx-2">|</span>
-                          <span>Color: {item.variantColor}</span>
-                          <span className="mx-2">|</span>
-                          <span>Qty: {item.quantity}</span>
+                        <div className="summary-card mt-3">
+                          <div className="summary-title"><DollarSign size={14}/> Price Details</div>
+                          <div className="price-table">
+                            <div className="price-row"><span>Subtotal</span><span>{formatPrice(order.subtotal)}</span></div>
+                            {order.discount > 0 && <div className="price-row text-success"><span>Discount</span><span>-{formatPrice(order.discount)}</span></div>}
+                            <div className="price-row"><span>Shipping</span><span>{order.shippingCharge === 0 ? 'FREE' : formatPrice(order.shippingCharge)}</span></div>
+                            <div className="price-row total"><span>Total</span><span>{formatPrice(order.totalAmount)}</span></div>
+                          </div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="order-footer p-4 border-top d-flex gap-3">
+                    <button className="btn-action-v2" onClick={() => handleDownloadInvoice(order)} disabled={downloadingInvoiceId === order._id}>
+                      <Download size={16} /> {downloadingInvoiceId === order._id ? 'Downloading...' : 'Invoice'}
+                    </button>
+                    <Link to="/contact" className="btn-action-v2"><HelpCircle size={16} /> Support</Link>
+                    {order.status === 'delivered' && (
+                      <button className="btn-action-v2 danger" onClick={() => handleReturnItem(order._id)}>Return Order</button>
+                    )}
+                    {['pending', 'confirmed', 'processing'].includes(order.status) && (
+                      <button className="btn-action-v2 danger" onClick={() => { setCancelOrderId(order._id); setCancelModalOpen(true); }}>Cancel Order</button>
+                    )}
+                  </div>
+
+                  {order.cancellationRequest?.isRequested && (
+                    <div className="cancel-status-bar p-4">
+                      <div className="status-content">
+                        <AlertCircle size={18} />
+                        <div>
+                          <strong>Cancellation Status: {order.status === 'cancel_requested' ? 'Pending Approval' : order.status === 'cancelled' ? 'Approved' : 'Rejected'}</strong>
+                          <p>Reason: {order.cancellationRequest.reason}</p>
+                          {order.cancellationRequest.adminNote && <p className="admin-note">Note: {order.cancellationRequest.adminNote}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Review Modal */}
+      {reviewModalOpen && reviewProduct && (
+        <div className="modal-root" onClick={closeReviewModal}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <div className="modal-head">
+              <h4>Write a Review</h4>
+              <button onClick={closeReviewModal}><X size={20}/></button>
+            </div>
+            <form className="modal-form" onSubmit={submitReview}>
+              <div className="rating-box">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star 
+                    key={star} 
+                    size={32} 
+                    onClick={() => setRating(star)}
+                    fill={star <= rating ? "#f59e0b" : "none"}
+                    stroke={star <= rating ? "#f59e0b" : "#d1d5db"}
+                    className={star <= rating ? 'active' : ''}
+                  />
+                ))}
+              </div>
+              <textarea 
+                className="modal-input" 
+                rows="4" 
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="What do you think about this product?"
+              ></textarea>
+              <div className="photo-upload-section">
+                <div className="photo-list">
+                  {reviewPhotos.map((url, i) => (
+                    <div key={i} className="photo-box">
+                      <img src={url} alt="" />
+                      <button type="button" onClick={() => setReviewPhotos(prev => prev.filter((_, idx) => idx !== i))}><X size={12}/></button>
                     </div>
                   ))}
                 </div>
-
-                {/* Shipping Address */}
-                <div className="mb-4">
-                  <h4 className="mb-2">
-                    <MapPin size={18} className="me-2" />
-                    Shipping Address
-                  </h4>
-                  <div className="address-box p-2 bg-light rounded">
-                    <p className="m-0 mb-1">
-                      <strong>{order.shippingAddress.fullName}</strong>
-                    </p>
-                    <p className="m-0 text-muted small">
-                      {order.shippingAddress.line1}, {order.shippingAddress.line2}
-                    </p>
-                    <p className="m-0 text-muted small">
-                      {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
-                      {order.shippingAddress.pincode}
-                    </p>
-                    <p className="m-0 text-muted small">📞 {order.shippingAddress.phone}</p>
-                  </div>
-                </div>
-
-                {/* Status Timeline */}
-                <div className="mb-4">
-                  <h4 className="mb-3">Order Timeline</h4>
-                  <div className="timeline">
-                    {order.statusHistory?.map((history, idx) => (
-                      <div key={idx} className="timeline-item">
-                        <div className="timeline-marker" style={{ background: getStatusColor(history.status) }}></div>
-                        <div className="timeline-content">
-                          <span style={{ color: getStatusColor(history.status), fontWeight: 600 }}>
-                            {history.status.charAt(0).toUpperCase() + history.status.slice(1)}
-                          </span>
-                          <div className="text-muted small">
-                            {new Date(history.timestamp).toLocaleDateString('en-IN', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </div>
-                          {history.note && <div className="text-muted small mt-1">{history.note}</div>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Breakdown */}
-                <div className="mb-4">
-                  <h4 className="mb-2">Price Details</h4>
-                  <div className="price-breakdown p-2 bg-light rounded">
-                    <div className="d-flex justify-between mb-2">
-                      <span className="text-muted">Subtotal ({order.items.length} items)</span>
-                      <span>{formatPrice(order.subtotal)}</span>
-                    </div>
-                    {order.discount > 0 && (
-                      <div className="d-flex justify-between mb-2 text-success">
-                        <span className="text-muted">Discount</span>
-                        <span>-{formatPrice(order.discount)}</span>
-                      </div>
-                    )}
-                    <div className="d-flex justify-between mb-2">
-                      <span className="text-muted">Shipping</span>
-                      <span>{order.shippingCharge === 0 ? 'FREE' : formatPrice(order.shippingCharge)}</span>
-                    </div>
-                    <div className="border-top my-2"></div>
-                    <div className="d-flex justify-between">
-                      <strong>Total</strong>
-                      <strong>{formatPrice(order.totalAmount)}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment Status */}
-                <div className="mb-4">
-                  <h4 className="mb-2">Payment Status</h4>
-                  <div
-                    className="payment-status p-2 rounded"
-                    style={{
-                      background: (order.paymentStatus === 'paid' ? '#10b981' : '#f59e0b') + '20',
-                      color: order.paymentStatus === 'paid' ? '#10b981' : '#f59e0b',
-                    }}
-                  >
-                    {order.paymentStatus === 'paid' ? '✓ Payment Received' : '⏳ Payment Pending'}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="d-flex gap-2">
-                  {order.status === 'delivered' && (
-                    <button 
-                      className="btn btn-outline flex-1 text-danger" 
-                      onClick={() => handleReturnItem(order._id)}
-                      style={{ borderColor: '#ef4444', color: '#ef4444' }}
-                    >
-                      Request Return
-                    </button>
-                  )}
-                  <Link to="/contact" className="btn btn-outline flex-1" style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-                    Need Help?
-                  </Link>
-                  <button
-                    className="btn btn-outline flex-1"
-                    onClick={() => handleDownloadInvoice(order)}
-                    disabled={downloadingInvoiceId === order._id}
-                  >
-                    {downloadingInvoiceId === order._id ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2"></span>
-                        Downloading...
-                      </>
-                    ) : (
-                      <>
-                        <Download size={16} className="me-2" style={{ display: 'inline' }} />
-                        Download Invoice
-                      </>
-                    )}
-                  </button>
-                </div>
+                <label className="upload-label">
+                  {uploadingPhotos ? 'Uploading...' : <><Upload size={16} /> Add Photos</>}
+                  <input type="file" multiple accept="image/*" onChange={handlePhotoUpload} style={{ display: 'none' }} disabled={uploadingPhotos} />
+                </label>
               </div>
-            )}
+              <button type="submit" className="modal-submit">Submit Review</button>
+            </form>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Cancellation Modal */}
+      {cancelModalOpen && (
+        <div className="modal-root" onClick={() => setCancelModalOpen(false)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <div className="modal-head danger">
+              <h4>Cancel Order</h4>
+              <button onClick={() => setCancelModalOpen(false)}><X size={20}/></button>
+            </div>
+            <form className="modal-form" onSubmit={handleCancelRequest}>
+              <div className="alert-yellow">Please provide a reason for cancellation. It will be reviewed by our team.</div>
+              <textarea 
+                className="modal-input" 
+                rows="4" 
+                required
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Why do you want to cancel?"
+              ></textarea>
+              <div className="d-flex gap-3">
+                <button type="button" className="btn-secondary flex-1" onClick={() => setCancelModalOpen(false)}>Go Back</button>
+                <button type="submit" className="btn-danger-v2 flex-1" disabled={cancelling}>{cancelling ? 'Sending...' : 'Confirm'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style>{`
-        .orders-container {
-          max-width: 900px;
+        .orders-page { background: #fdfdfd; min-height: 100vh; padding: 50px 0; }
+        .p-4 { padding: 1.5rem !important; }
+        .tiny-label { font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; display: block; }
+        .order-card-v2 { background: white; border: 1px solid #f0f0f0; border-radius: 12px; transition: all 0.3s ease; }
+        .order-card-v2.expanded { box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .order-card-header { cursor: pointer; border-bottom: 1px solid transparent; }
+        .expanded .order-card-header { border-bottom: 1px solid #f5f5f5; }
+        
+        .header-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 1.5rem; flex: 1; }
+        @media (max-width: 992px) { .header-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; } }
+        @media (max-width: 576px) { 
+          .header-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+          .order-card-header { flex-direction: column; align-items: flex-start !important; gap: 1rem; }
+          .header-actions { width: 100%; justify-content: space-between; border-top: 1px solid #f5f5f5; pt-3; padding-top: 12px; }
         }
-
-        .order-card {
-          border: 1px solid #e5e7eb;
-          transition: all 0.3s ease;
+        
+        .status-pill-v2 { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 700; color: var(--status-color); background: color-mix(in srgb, var(--status-color), transparent 90%); }
+        .btn-toggle { background: none; border: none; color: #ccc; transition: 0.3s; }
+        .expanded .btn-toggle { transform: rotate(180deg); color: var(--color-primary); }
+        
+        .order-card-body { max-height: 0; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .expanded .order-card-body { max-height: 5000px; }
+        
+        .details-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 3rem; }
+        @media (max-width: 992px) { .details-grid { grid-template-columns: 1fr; gap: 2rem; } }
+        
+        .section-title { font-size: 0.95rem; font-weight: 800; border-left: 4px solid var(--color-primary); padding-left: 12px; color: #333; }
+        
+        /* Items List Fix */
+        .items-stack { display: flex; flex-direction: column; gap: 1rem; }
+        .order-item-row { display: flex; gap: 1.5rem; padding: 1rem; border: 1px solid #f7f7f7; border-radius: 12px; background: #fff; }
+        @media (max-width: 480px) { 
+          .order-item-row { flex-direction: column; gap: 1rem; align-items: center; text-align: center; }
+          .item-meta { justify-content: center; }
         }
+        
+        .item-img-box { width: 90px; height: 110px; flex-shrink: 0; background: #f5f5f5; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .item-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .item-info { flex: 1; }
+        .item-name { font-weight: 700; color: #111; text-decoration: none; font-size: 0.95rem; }
+        .item-price { font-weight: 800; color: #333; }
+        .item-meta { font-size: 0.8rem; color: #777; margin-top: 4px; display: flex; gap: 1rem; }
+        .btn-review-inline { background: none; border: 1px solid #eee; color: #666; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; margin-top: 10px; cursor: pointer; }
+        
+        /* Modern Timeline */
+        .modern-timeline { position: relative; padding-left: 32px; }
+        .modern-timeline::before { content: ''; position: absolute; left: 14.5px; top: 10px; bottom: 10px; width: 2px; background: #f0f0f0; }
+        .timeline-node { position: relative; margin-bottom: 2rem; }
+        .node-marker { position: absolute; left: -32px; top: 0; width: 32px; height: 32px; border-radius: 50%; border: 4px solid white; display: flex; align-items: center; justify-content: center; color: white; z-index: 2; }
+        .node-marker svg { width: 14px; height: 14px; }
+        .node-label { font-weight: 800; font-size: 0.85rem; }
+        .node-time { font-size: 0.65rem; color: #aaa; }
+        .node-note { font-size: 0.75rem; color: #777; font-style: italic; margin-top: 4px; background: #f9f9f9; padding: 4px 8px; border-radius: 4px; }
+        
+        .summary-card { padding: 1.25rem; background: #fafafa; border-radius: 12px; }
+        .summary-title { font-weight: 700; font-size: 0.8rem; color: var(--color-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .summary-text { font-size: 0.75rem; color: #666; line-height: 1.5; }
+        
+        .price-table { margin-top: 10px; }
+        .price-row { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px; color: #777; }
+        .price-row.total { border-top: 1px solid #eee; padding-top: 8px; margin-top: 8px; font-weight: 800; color: #111; font-size: 0.9rem; }
+        
+        .order-footer { background: #fafafa; padding: 1.25rem; display: flex; flex-wrap: wrap; gap: 1rem; }
+        @media (max-width: 576px) { .btn-action-v2 { flex: 1; min-width: 150px; justify-content: center; } }
+        
+        .btn-action-v2 { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: white; border: 1px solid #eee; border-radius: 8px; font-weight: 700; font-size: 0.8rem; color: #444; cursor: pointer; text-decoration: none; transition: 0.2s; }
+        .btn-action-v2:hover { background: #f9f9f9; transform: translateY(-1px); }
+        .btn-action-v2.danger { color: #dc2626; border-color: #fee2e2; }
+        .btn-action-v2.danger:hover { background: #dc2626; color: white; }
+        
+        .cancel-status-bar { border-top: 1px solid #fff5f5; background: #fffcfc; padding: 1.25rem; }
+        .status-content { display: flex; gap: 12px; color: #dc2626; }
+        .status-content strong { font-size: 0.85rem; }
+        .status-content p { margin: 2px 0 0; font-size: 0.75rem; color: #888; }
+        .admin-note { color: #dc2626 !important; font-weight: 600; }
 
-        .order-card:hover {
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .order-header {
-          cursor: pointer;
-          user-select: none;
-        }
-
-        .order-header:hover {
-          background: #f9fafb;
-        }
-
-        .order-header-left,
-        .order-header-right {
-          flex: 1;
-        }
-
-        .order-number {
-          font-size: 0.95rem;
-        }
-
-        .status-badge {
-          display: inline-block;
-          padding: 0.25rem 0.75rem;
-          border-radius: 1rem;
-          font-size: 0.75rem;
-          font-weight: 600;
-        }
-
-        .order-item-img {
-          width: 60px;
-          height: 60px;
-          object-fit: cover;
-          border-radius: 0.5rem;
-        }
-
-        .timeline {
-          position: relative;
-          padding-left: 2rem;
-        }
-
-        .timeline-item {
-          position: relative;
-          margin-bottom: 1.5rem;
-          padding-bottom: 1rem;
-        }
-
-        .timeline-item:not(:last-child)::after {
-          content: '';
-          position: absolute;
-          left: -1.25rem;
-          top: 2rem;
-          width: 2px;
-          height: calc(100% + 0.5rem);
-          background: #e5e7eb;
-        }
-
-        .timeline-marker {
-          position: absolute;
-          left: -1.6rem;
-          top: 0;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          border: 3px solid white;
-        }
-
-        .timeline-content {
-          font-size: 0.9rem;
-        }
-
-        .spinner {
-          display: inline-block;
-          width: 40px;
-          height: 40px;
-          border: 4px solid #f3f4f6;
-          border-top: 4px solid #2563eb;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        .d-flex {
-          display: flex;
-        }
-
-        .justify-between {
-          justify-content: space-between;
-        }
-
-        .align-center {
-          align-items: center;
-        }
-
-        .gap-2 {
-          gap: 0.5rem;
-        }
-
-        .gap-3 {
-          gap: 1rem;
-        }
-
-        .mb-2 { margin-bottom: 0.5rem; }
-        .mb-3 { margin-bottom: 1rem; }
-        .mb-4 { margin-bottom: 1.5rem; }
-        .ms-2 { margin-left: 0.5rem; }
-        .me-1 { margin-right: 0.25rem; }
-        .me-2 { margin-right: 0.5rem; }
-        .me-3 { margin-right: 1rem; }
-        .mx-2 { margin-left: 0.5rem; margin-right: 0.5rem; }
-        .m-0 { margin: 0; }
-        .my-2 { margin-top: 0.5rem; margin-bottom: 0.5rem; }
-
-        .text-muted {
-          color: #6b7280;
-        }
-
-        .text-success {
-          color: #10b981;
-        }
-
-        .text-right {
-          text-align: right;
-        }
-
-        .bg-light {
-          background: #f9fafb;
-        }
-
-        .rounded {
-          border-radius: 0.5rem;
-        }
-
-        .border-top {
-          border-top: 1px solid #e5e7eb;
-        }
-
-        .small {
-          font-size: 0.875rem;
-        }
-
-        .flex-1 {
-          flex: 1;
-        }
-
-        .cursor-pointer {
-          cursor: pointer;
-        }
-
-        .p-2 { padding: 0.5rem; }
-        .p-3 { padding: 1rem; }
-
-        @media (max-width: 768px) {
-          .order-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .order-header-right {
-            margin-top: 1rem;
-            text-align: left;
-          }
-        }
+        /* Modal Redesign */
+        .modal-root { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 1rem; }
+        .modal-container { background: white; width: 100%; max-width: 450px; border-radius: 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.2); animation: pop 0.3s ease; overflow: hidden; }
+        @keyframes pop { from { transform: scale(0.9); opacity: 0; } }
+        .modal-head { padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f5f5f5; }
+        .modal-head.danger { background: #fff5f5; color: #dc2626; }
+        .modal-form { padding: 1.5rem; }
+        .rating-box { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .modal-input { width: 100%; border: 1.5px solid #eee; border-radius: 12px; padding: 12px; font-size: 0.9rem; transition: 0.2s; }
+        .modal-input:focus { border-color: var(--color-primary); outline: none; }
+        .modal-submit { width: 100%; padding: 14px; background: var(--color-primary); color: white; border: none; border-radius: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 1.5rem; cursor: pointer; }
+        .upload-label { border: 2px dashed #eee; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 10px; color: #888; cursor: pointer; font-size: 0.8rem; }
+        .alert-yellow { padding: 10px; background: #fffbeb; color: #92400e; border-radius: 8px; font-size: 0.75rem; margin-bottom: 1rem; }
+        .photo-list { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .photo-box { position: relative; width: 50px; height: 50px; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+        .photo-box button { position: absolute; -top: 5px; -right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; font-size: 8px; }
+        
+        .spinner-glow { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--color-primary); border-radius: 50%; animation: rot 1s infinite linear; }
+        @keyframes rot { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

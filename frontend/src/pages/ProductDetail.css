@@ -257,6 +257,45 @@
   margin-bottom: 0.5rem;
 }
 
+/* Reviews Section Styling */
+.product-reviews-section {
+  background-color: var(--color-bg-subtle);
+  border-radius: var(--radius-lg);
+  padding: 3rem;
+  margin-top: 4rem;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+  border: 1px solid var(--color-border);
+}
+
+.reviews-title {
+  font-family: var(--font-heading);
+  color: var(--color-secondary);
+  font-size: 1.75rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.review-item {
+  background-color: var(--color-bg);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  transition: transform 0.2s;
+}
+
+.review-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
 @media (max-width: 1024px) {
   .product-detail-grid {
     grid-template-columns: 50% 50%;
@@ -432,7 +471,18 @@
   }
   
   .product-description {
-    margin-bottom: 5rem;
+    margin-bottom: 3rem;
+  }
+  
+  .product-reviews-section {
+    padding: 1.5rem;
+    margin-top: 3rem;
+    margin-bottom: 6rem;
+  }
+  
+  .reviews-title {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
   }
   
   .product-description h3 {

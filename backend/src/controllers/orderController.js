@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
+const { createNotification } = require('../utils/notificationHelper');
 
 // @POST /api/v1/orders
 const createOrder = asyncHandler(async (req, res) => {
@@ -68,6 +69,15 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   order.statusHistory.push({ status, note });
   if (status === 'delivered') order.paymentStatus = 'paid';
   await order.save();
+
+  // Send Notification
+  await createNotification({
+    user: order.user,
+    title: `Order Status Updated: ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+    message: `Your order #${order.orderNumber} is now ${status}. ${note || ''}`,
+    link: `/orders/${order._id}`
+  });
+
   res.json({ success: true, order });
 });
 
@@ -137,4 +147,82 @@ const returnOrder = asyncHandler(async (req, res) => {
   res.json({ success: true, order });
 });
 
-module.exports = { createOrder, getMyOrders, getOrderById, getAllOrders, updateOrderStatus, getOrderStats, trackOrder, returnOrder };
+// @PUT /api/v1/orders/:id/cancel
+const requestOrderCancellation = asyncHandler(async (req, res) => {
+  const { reason } = req.body;
+  const order = await Order.findById(req.params.id);
+  if (!order) { res.status(404); throw new Error('Order not found'); }
+  
+  if (order.user.toString() !== req.user._id.toString()) {
+    res.status(403); throw new Error('Not authorized to cancel this order');
+  }
+
+  // Only pending or confirmed orders can be cancelled
+  const cancellableStatuses = ['pending', 'confirmed', 'processing'];
+  if (!cancellableStatuses.includes(order.status)) {
+    res.status(400); throw new Error('Orders that are shipped or delivered cannot be cancelled');
+  }
+
+  order.status = 'cancel_requested';
+  order.cancellationRequest = {
+    isRequested: true,
+    reason,
+    requestedAt: new Date()
+  };
+  order.statusHistory.push({ 
+    status: 'cancel_requested', 
+    note: `Cancellation requested by customer. Reason: ${reason}` 
+  });
+  
+  await order.save();
+  res.json({ success: true, order });
+});
+
+// @PUT /api/v1/orders/:id/cancel-handle (admin)
+const handleCancellationRequest = asyncHandler(async (req, res) => {
+  const { action, adminNote } = req.body; // action: 'approve' or 'reject'
+  const order = await Order.findById(req.params.id);
+  if (!order) { res.status(404); throw new Error('Order not found'); }
+
+  if (order.status !== 'cancel_requested') {
+    res.status(400); throw new Error('No cancellation request found for this order');
+  }
+
+  if (action === 'approve') {
+    order.status = 'cancelled';
+    order.statusHistory.push({ status: 'cancelled', note: `Cancellation approved by admin. ${adminNote || ''}` });
+    if (order.paymentStatus === 'paid') {
+      order.paymentStatus = 'refunded';
+    }
+  } else {
+    // Revert to processing or confirmed
+    order.status = 'confirmed';
+    order.statusHistory.push({ status: 'confirmed', note: `Cancellation request rejected by admin. ${adminNote || ''}` });
+  }
+
+  order.cancellationRequest.adminNote = adminNote;
+  await order.save();
+
+  // Send Notification
+  await createNotification({
+    user: order.user,
+    title: `Cancellation Request ${action === 'approve' ? 'Approved' : 'Rejected'}`,
+    message: `Your cancellation request for order #${order.orderNumber} has been ${action}ed. ${adminNote || ''}`,
+    link: `/orders/${order._id}`
+  });
+
+  res.json({ success: true, order });
+});
+
+module.exports = { 
+  createOrder, 
+  getMyOrders, 
+  getOrderById, 
+  getAllOrders, 
+  updateOrderStatus, 
+  getOrderStats, 
+  trackOrder, 
+  returnOrder,
+  requestOrderCancellation,
+  handleCancellationRequest
+};

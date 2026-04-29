@@ -24,15 +24,14 @@ const OrdersManagement = () => {
   };
 
   const updateOrderStatus = async (orderId, status) => {
-    let note = 'Status updated by admin';
+    let note = '';
+    
     if (status === 'return_rejected') {
       note = window.prompt("Please provide a reason for rejecting this return:");
-      if (note === null) return; // User cancelled prompt
+      if (note === null) return;
       if (note.trim() === '') note = 'Return request rejected';
-    } else if (status === 'returned') {
-      note = window.prompt("Add a note for this return approval (optional):") || 'Return approved by admin';
-    } else if (status === 'return_requested') {
-      note = 'Return requested';
+    } else {
+      note = window.prompt(`Add a note for this status update to '${status}' (optional):`) || `Order is now ${status}`;
     }
 
     try {
@@ -44,7 +43,18 @@ const OrdersManagement = () => {
     }
   };
 
-  const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'return_requested', 'return_rejected', 'returned'];
+  const handleCancellation = async (orderId, action) => {
+    const adminNote = window.prompt(`Please provide a note for ${action === 'approve' ? 'approving' : 'rejecting'} this cancellation (optional):`) || '';
+    try {
+      await api.put(`/orders/${orderId}/cancel-handle`, { action, adminNote });
+      toast.success(`Cancellation request ${action}ed`);
+      fetchOrders();
+    } catch {
+      toast.error('Failed to process cancellation');
+    }
+  };
+
+  const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'cancel_requested', 'return_requested', 'return_rejected', 'returned'];
 
   if (loading) return <div>Loading...</div>;
 
@@ -53,7 +63,7 @@ const OrdersManagement = () => {
       <div style={{ marginBottom: '2rem' }}>
         <h2 style={{ marginBottom: '1rem' }}>Orders Management</h2>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {['', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'return_requested'].map((status) => (
+          {['', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancel_requested', 'return_requested'].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
@@ -156,6 +166,22 @@ const OrdersManagement = () => {
                     </p>
                   </div>
                 </div>
+
+                {order.status === 'cancel_requested' && (
+                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '0.5rem' }}>
+                    <h4 style={{ color: '#92400e', marginBottom: '0.5rem' }}>Cancellation Request</h4>
+                    <p style={{ margin: '0.25rem 0' }}><strong>Reason:</strong> {order.cancellationRequest?.reason}</p>
+                    <p style={{ margin: '0.25rem 0' }}><strong>Requested At:</strong> {new Date(order.cancellationRequest?.requestedAt).toLocaleString()}</p>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                      <button onClick={() => handleCancellation(order._id, 'approve')} style={{ padding: '0.5rem 1.5rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+                        Approve Cancellation (Refund)
+                      </button>
+                      <button onClick={() => handleCancellation(order._id, 'reject')} style={{ padding: '0.5rem 1.5rem', background: '#4b5563', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+                        Reject Request
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
         </div>

@@ -31,7 +31,7 @@ const orderSchema = new mongoose.Schema(
     paymentId: { type: String },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'return_requested', 'return_rejected', 'returned'],
+      enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'cancel_requested', 'return_requested', 'return_rejected', 'returned'],
       default: 'pending',
     },
     subtotal: { type: Number, required: true },
@@ -39,6 +39,12 @@ const orderSchema = new mongoose.Schema(
     shippingCharge: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true },
     notes: { type: String },
+    cancellationRequest: {
+      isRequested: { type: Boolean, default: false },
+      reason: String,
+      requestedAt: Date,
+      adminNote: String
+    },
     statusHistory: [
       {
         status: String,

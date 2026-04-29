@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createOrder, getMyOrders, getOrderById, getAllOrders, updateOrderStatus, getOrderStats, trackOrder, returnOrder } = require('../controllers/orderController');
+const { createOrder, getMyOrders, getOrderById, getAllOrders, updateOrderStatus, getOrderStats, trackOrder, returnOrder, requestOrderCancellation, handleCancellationRequest } = require('../controllers/orderController');
 const { protect, adminOnly } = require('../middleware/auth');
 
 router.post('/', protect, createOrder);
@@ -11,5 +11,7 @@ router.get('/', protect, adminOnly, getAllOrders);
 router.get('/:id', protect, getOrderById);
 router.put('/:id/status', protect, adminOnly, updateOrderStatus);
 router.put('/:id/return', protect, returnOrder);
+router.put('/:id/cancel', protect, requestOrderCancellation);
+router.put('/:id/cancel-handle', protect, adminOnly, handleCancellationRequest);
 
 module.exports = router;

@@ -1,18 +1,21 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Heart, User, Search, Menu, X } from 'lucide-react';
+import { ShoppingBag, Heart, User, Search, Menu, X, Bell, Package, LogOut, Baby } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useNotifications } from '../context/NotificationContext';
 import { useState, useEffect } from 'react';
 import './Navbar.css';
 
 const Navbar = () => {
   const { isAuth, user, logout } = useAuth();
   const { totalItems } = useCart();
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === '/';
   const [hasBackground, setHasBackground] = useState(!isHome);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!isHome) {
@@ -26,6 +29,13 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isHome]);
+
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' && searchTerm.trim()) {
+      navigate(`/category/all?search=${searchTerm.trim()}`);
+      setSearchTerm('');
+    }
+  };
 
   return (
     <>
@@ -55,7 +65,14 @@ const Navbar = () => {
 
           <div className="navbar-center search-container">
             <Search className="search-icon" size={18} />
-            <input type="text" placeholder="Search for kurtas, sarees, shirts and more..." className="search-input" />
+            <input 
+              type="text" 
+              placeholder="Search for kurtas, sarees, shirts and more..." 
+              className="search-input" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleSearch}
+            />
           </div>
 
           <div className="navbar-right">
@@ -80,6 +97,45 @@ const Navbar = () => {
                   <User size={20} />
                   <span>Login</span>
                 </Link>
+              )}
+
+              {isAuth && (
+                <div className="profile-dropdown-wrapper">
+                  <button className="nav-action-item cart-action">
+                    <Bell size={20} />
+                    <span>Notifs</span>
+                    {unreadCount > 0 && <span className="cart-badge">{unreadCount}</span>}
+                  </button>
+                  <div className="profile-dropdown notification-dropdown">
+                    <div className="dropdown-header d-flex justify-between align-center">
+                      <p className="font-heading m-0">Notifications</p>
+                      {unreadCount > 0 && (
+                        <button onClick={markAllRead} className="btn-link" style={{ fontSize: '0.75rem' }}>Mark all read</button>
+                      )}
+                    </div>
+                    <div className="notification-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-center text-muted">No notifications</div>
+                      ) : (
+                        notifications.map(n => (
+                          <div 
+                            key={n._id} 
+                            className={`notification-item ${!n.isRead ? 'unread' : ''}`}
+                            style={{ borderBottom: '1px solid #eee', cursor: 'pointer' }}
+                            onClick={() => {
+                              markRead(n._id);
+                              if (n.link) navigate(n.link);
+                            }}
+                          >
+                            <p className="m-0" style={{ fontSize: '0.9rem', fontWeight: !n.isRead ? 700 : 500, color: '#111' }}>{n.title}</p>
+                            <p className="m-0 text-muted" style={{ fontSize: '0.8rem', lineHeight: '1.4', marginTop: '2px' }}>{n.message}</p>
+                            <p className="m-0 text-muted mt-1" style={{ fontSize: '0.7rem' }}>{new Date(n.createdAt).toLocaleDateString()}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
               
               <Link to="/wishlist" className="nav-action-item">
@@ -110,21 +166,21 @@ const Navbar = () => {
             className="mobile-nav-link"
             onClick={() => setMobileMenuOpen(false)}
           >
-            👔 Men
+            <User size={20} /> Men
           </Link>
           <Link 
             to="/category/women" 
             className="mobile-nav-link"
             onClick={() => setMobileMenuOpen(false)}
           >
-            👗 Women
+            <User size={20} /> Women
           </Link>
           <Link 
             to="/category/kids" 
             className="mobile-nav-link"
             onClick={() => setMobileMenuOpen(false)}
           >
-            👶 Kids
+            <Baby size={20} /> Kids
           </Link>
         </nav>
         <div className="mobile-menu-divider"></div>
@@ -136,7 +192,7 @@ const Navbar = () => {
                 className="mobile-menu-item"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                📦 My Orders
+                <Package size={20} /> My Orders
               </Link>
               <button 
                 onClick={() => { 
@@ -146,7 +202,7 @@ const Navbar = () => {
                 }} 
                 className="mobile-menu-item"
               >
-                🚪 Logout
+                <LogOut size={20} /> Logout
               </button>
             </>
           ) : (
@@ -155,7 +211,7 @@ const Navbar = () => {
               className="mobile-menu-item"
               onClick={() => setMobileMenuOpen(false)}
             >
-              🔐 Login / Sign Up
+              <User size={20} /> Login / Sign Up
             </Link>
           )}
           <Link 
@@ -163,14 +219,14 @@ const Navbar = () => {
             className="mobile-menu-item"
             onClick={() => setMobileMenuOpen(false)}
           >
-            ❤️ Wishlist
+            <Heart size={20} /> Wishlist
           </Link>
           <Link 
             to="/cart" 
             className="mobile-menu-item"
             onClick={() => setMobileMenuOpen(false)}
           >
-            🛒 Cart {totalItems > 0 && `(${totalItems})`}
+            <ShoppingBag size={20} /> Cart {totalItems > 0 && `(${totalItems})`}
           </Link>
         </div>
       </div>

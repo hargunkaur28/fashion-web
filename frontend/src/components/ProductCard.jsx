@@ -47,7 +47,7 @@ const ProductCard = ({ product }) => {
         </div>
 
         {/* Hover Actions */}
-        <div className={`product-actions ${isHovered ? 'show' : ''}`}>
+        <div className={`product-actions ${(isHovered || wishlisted) ? 'show' : ''}`}>
           <button className={`action-btn wishlist-btn ${wishlisted ? 'active' : ''}`} onClick={handleWishlist}>
             <Heart size={20} fill={wishlisted ? 'currentColor' : 'none'} />
           </button>

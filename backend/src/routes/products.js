@@ -3,11 +3,12 @@ const router = express.Router();
 const {
   getProducts, getProductById, getProductBySlug,
   createProduct, updateProduct, deleteProduct,
-  addReview, toggleWishlist,
+  addReview, toggleWishlist, getWishlistProducts
 } = require('../controllers/productController');
 const { protect, adminOnly } = require('../middleware/auth');
 
 router.get('/', getProducts);
+router.get('/wishlist/details', protect, getWishlistProducts);
 router.get('/slug/:slug', getProductBySlug);
 router.get('/:id', getProductById);
 router.post('/', protect, adminOnly, createProduct);

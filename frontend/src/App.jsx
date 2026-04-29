@@ -20,6 +20,11 @@ import TrackOrder from './pages/policies/TrackOrder';
 import Shipping from './pages/policies/Shipping';
 import Returns from './pages/policies/Returns';
 
+// Contexts
+import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
+import { NotificationProvider } from './context/NotificationContext';
+
 function AdminRedirect() {
   useEffect(() => {
     window.location.href = import.meta.env.VITE_ADMIN_URL || 'http://localhost:5174';
@@ -32,34 +37,41 @@ function App() {
   const isHome = location.pathname === '/';
 
   return (
-    <div className="app-container">
-      <ScrollToTop />
-      <Navbar />
-      <main className={!isHome ? 'pt-navbar' : ''}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/category/:gender" element={<CategoryPage />} />
-          <Route path="/product/:slug" element={<ProductDetail />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/orders/:orderId" element={<Orders />} />
-          <Route path="/admin" element={<AdminRedirect />} />
-          {/* Policy Pages */}
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/t-and-c" element={<TandC />} />
-          <Route path="/terms-of-use" element={<TermsOfUse />} />
-          <Route path="/track-order" element={<TrackOrder />} />
-          <Route path="/shipping" element={<Shipping />} />
-          <Route path="/returns" element={<Returns />} />
-        </Routes>
-      </main>
-      <Footer />
-    </div>
+    <CartProvider>
+      <WishlistProvider>
+        <NotificationProvider>
+          <div className="app-container">
+            <ScrollToTop />
+            <Navbar />
+            <main className={!isHome ? 'pt-navbar' : ''}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/category/:gender" element={<CategoryPage />} />
+                <Route path="/product/:slug" element={<ProductDetail />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/orders/:orderId" element={<Orders />} />
+                <Route path="/admin" element={<AdminRedirect />} />
+                
+                {/* Policy Pages */}
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/t-and-c" element={<TandC />} />
+                <Route path="/terms-of-use" element={<TermsOfUse />} />
+                <Route path="/track-order" element={<TrackOrder />} />
+                <Route path="/shipping" element={<Shipping />} />
+                <Route path="/returns" element={<Returns />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </NotificationProvider>
+      </WishlistProvider>
+    </CartProvider>
   );
 }
 

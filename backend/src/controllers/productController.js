@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const Product = require('../models/Product');
+const Order = require('../models/Order');
 
 // @GET /api/v1/products
 const getProducts = asyncHandler(async (req, res) => {
@@ -7,13 +8,26 @@ const getProducts = asyncHandler(async (req, res) => {
 
   const query = { isActive: true };
 
-  if (gender) query.gender = gender;
+  if (gender && gender !== 'all') query.gender = gender;
   if (subGender) query.subGender = subGender;
   if (type) query.type = { $in: type.split(',') };
   if (brand) query.brand = { $in: brand.split(',') };
   if (featured === 'true') query.isFeatured = true;
   if (trending === 'true') query.isTrending = true;
-  if (search) query.$text = { $search: search };
+  if (search) {
+    const searchTerms = search.split(' ').filter(term => term.trim());
+    if (searchTerms.length > 0) {
+      query.$and = searchTerms.map(term => ({
+        $or: [
+          { name: new RegExp(term, 'i') },
+          { description: new RegExp(term, 'i') },
+          { brand: new RegExp(term, 'i') },
+          { type: new RegExp(term, 'i') },
+          { tags: new RegExp(term, 'i') }
+        ]
+      }));
+    }
+  }
   if (minPrice || maxPrice) {
     query.price = {};
     if (minPrice) query.price.$gte = Number(minPrice);
@@ -77,18 +91,36 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
 // @POST /api/v1/products/:id/reviews
 const addReview = asyncHandler(async (req, res) => {
-  const { rating, comment } = req.body;
+  const { rating, comment, photos } = req.body;
   const product = await Product.findById(req.params.id);
   if (!product) { res.status(404); throw new Error('Product not found'); }
 
-  const alreadyReviewed = product.reviews.find(r => r.user.toString() === req.user._id.toString());
-  if (alreadyReviewed) { res.status(400); throw new Error('Already reviewed'); }
+  // User can only review if they have a delivered order containing this product
+  const hasBought = await Order.findOne({
+    user: req.user._id,
+    status: 'delivered',
+    'items.product': product._id
+  });
 
-  product.reviews.push({ user: req.user._id, name: req.user.name, rating: Number(rating), comment });
+  if (!hasBought) {
+    res.status(403);
+    throw new Error('You can only review products after they have been delivered to you.');
+  }
+
+  const alreadyReviewed = product.reviews.find(r => r.user.toString() === req.user._id.toString());
+  if (alreadyReviewed) { res.status(400); throw new Error('You have already reviewed this product.'); }
+
+  product.reviews.push({ 
+    user: req.user._id, 
+    name: req.user.name, 
+    rating: Number(rating), 
+    comment,
+    photos: photos || []
+  });
   product.numReviews = product.reviews.length;
   product.rating = product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length;
   await product.save();
-  res.status(201).json({ success: true, message: 'Review added' });
+  res.status(201).json({ success: true, message: 'Review added successfully' });
 });
 
 // @PUT /api/v1/products/:id/wishlist
@@ -105,4 +137,20 @@ const toggleWishlist = asyncHandler(async (req, res) => {
   res.json({ success: true, wishlist: user.wishlist });
 });
 
-module.exports = { getProducts, getProductById, getProductBySlug, createProduct, updateProduct, deleteProduct, addReview, toggleWishlist };
+// @GET /api/v1/products/wishlist/details
+const getWishlistProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({ _id: { $in: req.user.wishlist } });
+  res.json({ success: true, products });
+});
+
+module.exports = { 
+  getProducts, 
+  getProductById, 
+  getProductBySlug, 
+  createProduct, 
+  updateProduct, 
+  deleteProduct, 
+  addReview, 
+  toggleWishlist,
+  getWishlistProducts
+};

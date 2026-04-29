@@ -14,6 +14,8 @@ const cartRoutes = require('./src/routes/cart');
 const orderRoutes = require('./src/routes/orders');
 const adminRoutes = require('./src/routes/admin');
 const uploadRoutes = require('./src/routes/upload');
+const couponRoutes = require('./src/routes/coupons');
+const notificationRoutes = require('./src/routes/notifications');
 
 connectDB();
 
@@ -44,6 +46,8 @@ app.use('/api/v1/cart', cartRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/coupons', couponRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
