@@ -83,9 +83,9 @@ const Wishlist = () => {
           <h1 className="font-heading mb-2">My Wishlist</h1>
           <p className="text-muted">{products.length} Items</p>
         </div>
-        <Link to="/" className="btn btn-outline-primary btn-sm d-flex align-center gap-2">
-          <ArrowLeft size={18} /> BACK TO HOME
-        </Link>
+        <button onClick={() => navigate(-1)} className="btn btn-outline-primary btn-sm d-flex align-center gap-2" style={{ background: 'none', border: '1px solid', cursor: 'pointer' }}>
+          <ArrowLeft size={18} /> BACK
+        </button>
       </div>
 
       <div className="grid-cols-4 mt-4">

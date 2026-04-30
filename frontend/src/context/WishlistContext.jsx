@@ -22,6 +22,11 @@ export const WishlistProvider = ({ children }) => {
     try {
       const { data } = await api.put(`/products/${productId}/wishlist`);
       setWishlist(data.wishlist);
+      
+      // Update user in localStorage with new wishlist
+      const updatedUser = { ...user, wishlist: data.wishlist };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
       const isAdded = data.wishlist.includes(productId);
       toast.success(isAdded ? '❤️ Added to wishlist' : 'Removed from wishlist');
     } catch { toast.error('Failed to update wishlist'); }

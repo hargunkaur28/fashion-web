@@ -143,6 +143,58 @@ const getWishlistProducts = asyncHandler(async (req, res) => {
   res.json({ success: true, products });
 });
 
+// @GET /api/v1/products/:id/related
+const getRelatedProducts = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) { res.status(404); throw new Error('Product not found'); }
+
+  const limit = Number(req.query.limit) || 8;
+
+  // Build a query that finds candidates sharing at least one attribute
+  const candidates = await Product.find({
+    _id: { $ne: product._id },
+    isActive: true,
+    $or: [
+      { type: product.type },
+      { gender: product.gender },
+      { brand: product.brand },
+      { tags: { $in: product.tags || [] } },
+    ],
+  }).limit(50);
+
+  // Score each candidate by how closely it relates
+  const scored = candidates.map(c => {
+    let score = 0;
+
+    // Same clothing type is the strongest signal (e.g. kurta → kurta)
+    if (c.type === product.type) score += 3;
+
+    // Same gender ensures relevance (men's → men's)
+    if (c.gender === product.gender) score += 2;
+
+    // Same brand means the shopper might like the label
+    if (c.brand === product.brand) score += 2;
+
+    // Overlapping tags (e.g. "festive", "cotton", "casual")
+    if (product.tags && c.tags) {
+      const overlap = c.tags.filter(t => product.tags.includes(t)).length;
+      score += overlap;
+    }
+
+    // Similar price range (within 40%) — shoppers have a budget
+    const priceDiff = Math.abs(c.price - product.price) / product.price;
+    if (priceDiff <= 0.4) score += 1;
+
+    return { product: c, score };
+  });
+
+  // Sort by score descending, then by rating as tiebreaker
+  scored.sort((a, b) => b.score - a.score || b.product.rating - a.product.rating);
+
+  const related = scored.slice(0, limit).map(s => s.product);
+  res.json({ success: true, products: related });
+});
+
 module.exports = { 
   getProducts, 
   getProductById, 
@@ -152,5 +204,6 @@ module.exports = {
   deleteProduct, 
   addReview, 
   toggleWishlist,
-  getWishlistProducts
+  getWishlistProducts,
+  getRelatedProducts
 };

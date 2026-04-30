@@ -39,9 +39,13 @@ const ProductsManagement = () => {
     sku: '',
   });
 
+  const [customSizeInput, setCustomSizeInput] = useState('');
+  const [customColorInput, setCustomColorInput] = useState('');
+  const [customColorHex, setCustomColorHex] = useState('#000000');
+
   const typeOptions = ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'indo-western', 'party-wear', 'plus-size', 'other'];
-  const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36'];
-  const colorOptions = [
+  const [sizeOptions, setSizeOptions] = useState(['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36']);
+  const [colorOptions, setColorOptions] = useState([
     { name: 'Black', hex: '#000000' },
     { name: 'White', hex: '#ffffff' },
     { name: 'Red', hex: '#ff0000' },
@@ -52,7 +56,7 @@ const ProductsManagement = () => {
     { name: 'Pink', hex: '#f48fb1' },
     { name: 'Green', hex: '#43a047' },
     { name: 'Olive', hex: '#827717' },
-  ];
+  ]);
 
   useEffect(() => {
     fetchProducts();
@@ -321,6 +325,31 @@ const ProductsManagement = () => {
                       </div>
                     ))}
                   </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={customSizeInput}
+                      onChange={(e) => setCustomSizeInput(e.target.value)}
+                      placeholder="Custom size (e.g. 38, Free Size)"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{ padding: '0.65rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                      onClick={() => {
+                        const s = customSizeInput.trim();
+                        if (!s) return toast.error('Enter a size');
+                        if (sizeOptions.includes(s)) return toast.error('Size already exists');
+                        setSizeOptions([...sizeOptions, s]);
+                        setCustomSizeInput('');
+                        toast.success(`Size "${s}" added`);
+                      }}
+                    >
+                      + Add Size
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -447,7 +476,39 @@ const ProductsManagement = () => {
                     </label>
                   ))}
                 </div>
-              </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', alignItems: 'center' }}>
+                    <input
+                      type="color"
+                      value={customColorHex}
+                      onChange={(e) => setCustomColorHex(e.target.value)}
+                      style={{ width: '40px', height: '36px', padding: '2px', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer' }}
+                    />
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={customColorInput}
+                      onChange={(e) => setCustomColorInput(e.target.value)}
+                      placeholder="Color name (e.g. Maroon)"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{ padding: '0.65rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                      onClick={() => {
+                        const c = customColorInput.trim();
+                        if (!c) return toast.error('Enter a color name');
+                        if (colorOptions.find(o => o.name.toLowerCase() === c.toLowerCase())) return toast.error('Color already exists');
+                        setColorOptions([...colorOptions, { name: c, hex: customColorHex }]);
+                        setCustomColorInput('');
+                        setCustomColorHex('#000000');
+                        toast.success(`Color "${c}" added`);
+                      }}
+                    >
+                      + Add Color
+                    </button>
+                  </div>
+                </div>
 
               {/* Stock & SKU */}
               <div className="form-row">

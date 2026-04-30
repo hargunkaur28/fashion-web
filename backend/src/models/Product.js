@@ -48,6 +48,13 @@ const productSchema = new mongoose.Schema(
     numReviews: { type: Number, default: 0 },
 
     tags: [String],
+    sizeGuide: [{
+      size: { type: String },       // e.g. "S", "M", "L"
+      chest: { type: String },      // in cm
+      waist: { type: String },
+      hip: { type: String },
+      length: { type: String },
+    }],
     isFeatured: { type: Boolean, default: false },
     isTrending: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

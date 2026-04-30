@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Package, MapPin, CalendarDays, DollarSign, ChevronDown, ArrowLeft, Download, Star, Upload, X, CheckCircle2, Clock, Truck, Box, AlertCircle, HelpCircle } from 'lucide-react';
 import api from '../utils/api';
 import { formatPrice } from '../utils/formatPrice';
 import { generateInvoicePDF } from '../utils/generateInvoice';
 import toast from 'react-hot-toast';
+import './Orders.css';
 
 const Orders = () => {
   const { orderId } = useParams();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
@@ -184,9 +186,9 @@ const Orders = () => {
       <div className="container">
         <div className="page-header d-flex align-center justify-between mb-5">
           <div className="d-flex align-center gap-3">
-            <Link to="/" className="btn-back">
+            <button onClick={() => navigate(-1)} className="btn-back" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
               <ArrowLeft size={20} />
-            </Link>
+            </button>
             <div>
               <h1 className="font-heading m-0 h2">My Orders</h1>
               <p className="text-muted m-0 small">Manage your recent purchases and tracking</p>
@@ -243,10 +245,19 @@ const Orders = () => {
                     <div className="items-section">
                       <h5 className="section-title mb-4">Items in Order</h5>
                       <div className="items-stack">
-                        {order.items.map((item, idx) => (
+                        {order.items.map((item, idx) => {
+                          const NO_IMAGE_PLACEHOLDER = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22250%22%20height%3D%22250%22%20viewBox%3D%220%200%20250%20250%22%3E%3Crect%20fill%3D%22%23eaeaea%22%20width%3D%22250%22%20height%3D%22250%22%2F%3E%3Ctext%20fill%3D%22%23999%22%20font-family%3D%22sans-serif%22%20font-size%3D%2216%22%20dy%3D%2210.5%22%20font-weight%3D%22bold%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20text-anchor%3D%22middle%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E';
+                          return (
                           <div key={idx} className="order-item-row">
                             <Link to={`/product/${item.product}`} className="item-img-box">
-                              <img src={item.thumbnail} alt={item.name} />
+                              <img 
+                                src={(!item.thumbnail || item.thumbnail === 'undefined' || item.thumbnail === 'null') ? NO_IMAGE_PLACEHOLDER : item.thumbnail} 
+                                alt={item.name} 
+                                onError={(e) => {
+                                  e.target.onerror = null; // prevents infinite loop if placeholder also fails
+                                  e.target.src = NO_IMAGE_PLACEHOLDER;
+                                }}
+                              />
                             </Link>
                             <div className="item-info">
                               <div className="d-flex justify-between">
@@ -265,7 +276,8 @@ const Orders = () => {
                               )}
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 

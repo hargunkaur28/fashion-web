@@ -73,4 +73,19 @@ const deleteAddress = asyncHandler(async (req, res) => {
   res.json({ success: true, addresses: user.addresses });
 });
 
-module.exports = { register, login, getMe, updateProfile, addAddress, deleteAddress };
+// @PUT /api/v1/auth/change-password
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    res.status(400); throw new Error('Old password and new password are required');
+  }
+  const user = await User.findById(req.user._id);
+  if (!(await user.matchPassword(oldPassword))) {
+    res.status(401); throw new Error('Current password is incorrect');
+  }
+  user.password = newPassword;
+  await user.save();
+  res.json({ success: true, message: 'Password changed successfully' });
+});
+
+module.exports = { register, login, getMe, updateProfile, addAddress, deleteAddress, changePassword };

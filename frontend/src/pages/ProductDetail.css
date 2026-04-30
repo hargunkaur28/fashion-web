@@ -447,27 +447,41 @@
   }
   
   .action-buttons {
-    position: fixed;
-    bottom: 0;
+    position: sticky;
+    bottom: 65px;
     left: 0;
     right: 0;
-    padding: 0.75rem;
-    background: white;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
     z-index: 50;
-    margin: 0;
+    margin: 1.5rem -0.75rem 0;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    gap: 0.5rem;
   }
   
   .add-to-bag-btn {
     flex: 2;
-    padding: 0.8rem;
-    font-size: 0.95rem;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
   }
   
   .wishlist-action-btn {
     flex: 1;
-    padding: 0.8rem;
-    font-size: 0.9rem;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
   }
   
   .product-description {
@@ -620,5 +634,264 @@
   
   .details-list li {
     font-size: 0.85rem;
+  }
+}
+
+/* Related Products Section */
+.related-products-section {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.related-products-section .section-header-center {
+  margin-bottom: 2.5rem;
+}
+
+.related-products-section .section-title {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  color: var(--color-secondary);
+}
+
+.related-products-section .section-subtitle {
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+.related-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .related-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .related-products-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    margin-bottom: 5rem;
+  }
+  
+  .related-products-section .section-title {
+    font-size: 1.4rem;
+  }
+
+  .related-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .related-products-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+  }
+  
+  .related-products-section .section-title {
+    font-size: 1.2rem;
+  }
+
+  .related-products-grid {
+    gap: 0.75rem;
+  }
+}
+
+/* ── Size Guide Modal ── */
+.size-guide-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.size-guide-modal {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  max-width: 620px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: fadeInUp 0.3s ease;
+}
+
+.size-guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.75rem 2rem 1.25rem;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.size-guide-header h3 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+.size-guide-close {
+  background: var(--color-bg-subtle);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.size-guide-close:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.size-guide-body {
+  padding: 1.5rem 2rem 2rem;
+}
+
+.size-guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.size-guide-table th {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.size-guide-table th:first-child {
+  text-align: left;
+  border-radius: var(--radius-sm) 0 0 0;
+}
+
+.size-guide-table th:last-child {
+  border-radius: 0 var(--radius-sm) 0 0;
+}
+
+.size-guide-table td {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.size-guide-table td:first-child {
+  text-align: left;
+}
+
+.size-guide-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.size-guide-table tbody tr:hover {
+  background: var(--color-bg-subtle);
+}
+
+.size-guide-table tbody tr.active-size-row {
+  background: var(--color-primary-light);
+}
+
+.size-guide-table tbody tr.active-size-row td:first-child {
+  color: var(--color-primary);
+}
+
+.size-guide-tips {
+  margin-top: 1.75rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+.size-guide-tips h4 {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-secondary);
+}
+
+.size-guide-tips ul {
+  padding-left: 0;
+}
+
+.size-guide-tips li {
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  position: relative;
+  padding-left: 1rem;
+}
+
+.size-guide-tips li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .size-guide-overlay {
+    padding: 0.75rem;
+    align-items: flex-end;
+  }
+
+  .size-guide-modal {
+    max-height: 80vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .size-guide-header {
+    padding: 1.25rem 1.25rem 1rem;
+  }
+
+  .size-guide-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .size-guide-body {
+    padding: 1rem 1.25rem 1.5rem;
+  }
+
+  .size-guide-table {
+    font-size: 0.8rem;
+  }
+
+  .size-guide-table th, .size-guide-table td {
+    padding: 0.6rem 0.5rem;
+  }
+
+  .size-guide-tips {
+    padding: 1rem;
+  }
+
+  .size-guide-tips li {
+    font-size: 0.8rem;
   }
 }

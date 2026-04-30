@@ -1,11 +1,23 @@
 import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, ShieldCheck, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { formatPrice } from '../utils/formatPrice';
+import toast from 'react-hot-toast';
 import './Cart.css';
 
 const Cart = () => {
   const { cart, updateItem, removeItem, totalItems, totalAmount } = useCart();
+  const { toggle, isWishlisted } = useWishlist();
+
+  const handleSaveForLater = (item) => {
+    if (!isWishlisted(item.product._id)) {
+      toggle(item.product._id);
+    } else {
+      toast.success('Already in wishlist!');
+    }
+    removeItem(item._id);
+  };
 
   if (totalItems === 0) {
     return (
@@ -61,10 +73,16 @@ const Cart = () => {
                     </button>
                   </div>
                   
-                  <button className="remove-btn" onClick={() => removeItem(item._id)}>
-                    <Trash2 size={18} />
-                    <span>REMOVE</span>
-                  </button>
+                  <div className="d-flex align-center" style={{ gap: '1rem' }}>
+                    <button className="save-later-btn" onClick={() => handleSaveForLater(item)}>
+                      <Heart size={16} />
+                      <span>SAVE FOR LATER</span>
+                    </button>
+                    <button className="remove-btn" onClick={() => removeItem(item._id)}>
+                      <Trash2 size={16} />
+                      <span>REMOVE</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -36,9 +36,13 @@ const ProductEdit = () => {
     sku: '',
   });
 
+  const [customSizeInput, setCustomSizeInput] = useState('');
+  const [customColorInput, setCustomColorInput] = useState('');
+  const [customColorHex, setCustomColorHex] = useState('#000000');
+
   const typeOptions = ['shirt', 'tshirt', 'jeans', 'lowers', 'trousers', 'kurta', 'dress', 'top', 'skirt', 'jacket', 'shorts', 'hoodie', 'sweater', 'ethnic', 'indo-western', 'party-wear', 'plus-size', 'other'];
-  const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36'];
-  const colorOptions = [
+  const [sizeOptions, setSizeOptions] = useState(['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36']);
+  const [colorOptions, setColorOptions] = useState([
     { name: 'Black', hex: '#000000' },
     { name: 'White', hex: '#ffffff' },
     { name: 'Red', hex: '#ff0000' },
@@ -49,7 +53,7 @@ const ProductEdit = () => {
     { name: 'Pink', hex: '#f48fb1' },
     { name: 'Green', hex: '#43a047' },
     { name: 'Olive', hex: '#827717' },
-  ];
+  ]);
 
   useEffect(() => {
     fetchProduct();
@@ -447,6 +451,31 @@ const ProductEdit = () => {
                       </label>
                     ))}
                   </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={customSizeInput}
+                      onChange={(e) => setCustomSizeInput(e.target.value)}
+                      placeholder="Custom size (e.g. 38, Free Size)"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{ padding: '0.65rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                      onClick={() => {
+                        const s = customSizeInput.trim();
+                        if (!s) return toast.error('Enter a size');
+                        if (sizeOptions.includes(s)) return toast.error('Size already exists');
+                        setSizeOptions([...sizeOptions, s]);
+                        setCustomSizeInput('');
+                        toast.success(`Size "${s}" added`);
+                      }}
+                    >
+                      + Add Size
+                    </button>
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -475,6 +504,38 @@ const ProductEdit = () => {
                         {color.name}
                       </label>
                     ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', alignItems: 'center' }}>
+                    <input
+                      type="color"
+                      value={customColorHex}
+                      onChange={(e) => setCustomColorHex(e.target.value)}
+                      style={{ width: '40px', height: '36px', padding: '2px', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer' }}
+                    />
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={customColorInput}
+                      onChange={(e) => setCustomColorInput(e.target.value)}
+                      placeholder="Color name (e.g. Maroon)"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{ padding: '0.65rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                      onClick={() => {
+                        const c = customColorInput.trim();
+                        if (!c) return toast.error('Enter a color name');
+                        if (colorOptions.find(o => o.name.toLowerCase() === c.toLowerCase())) return toast.error('Color already exists');
+                        setColorOptions([...colorOptions, { name: c, hex: customColorHex }]);
+                        setCustomColorInput('');
+                        setCustomColorHex('#000000');
+                        toast.success(`Color "${c}" added`);
+                      }}
+                    >
+                      + Add Color
+                    </button>
                   </div>
                 </div>
               </div>
@@ -551,6 +612,109 @@ const ProductEdit = () => {
                         <button
                           type="button"
                           onClick={() => removeVariant(index)}
+                          className="btn-danger"
+                          style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Size Guide Section */}
+          <div style={{ marginBottom: '2rem', borderTop: '1px solid #e0d5ce', paddingTop: '2rem' }}>
+            <h3 style={{ marginBottom: '0.5rem', color: '#2d2d2d' }}>Custom Size Guide</h3>
+            <p style={{ fontSize: '0.85rem', color: '#888', marginBottom: '1.5rem' }}>
+              Leave empty to use the default size chart. Add custom measurements if this product has unique sizing.
+            </p>
+
+            <div style={{ background: '#f9f9f9', padding: '1.5rem', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Size</label>
+                  <select
+                    className="form-select"
+                    id="sg-size"
+                  >
+                    {sizeOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Chest (cm)</label>
+                  <input type="text" className="form-input" id="sg-chest" placeholder="e.g. 96" />
+                </div>
+                <div className="form-group">
+                  <label>Waist (cm)</label>
+                  <input type="text" className="form-input" id="sg-waist" placeholder="e.g. 82" />
+                </div>
+                <div className="form-group">
+                  <label>Hip (cm)</label>
+                  <input type="text" className="form-input" id="sg-hip" placeholder="e.g. 100" />
+                </div>
+                <div className="form-group">
+                  <label>Length (cm)</label>
+                  <input type="text" className="form-input" id="sg-length" placeholder="e.g. 72" />
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-primary"
+                style={{ marginTop: '0.5rem' }}
+                onClick={() => {
+                  const size = document.getElementById('sg-size').value;
+                  const chest = document.getElementById('sg-chest').value;
+                  const waist = document.getElementById('sg-waist').value;
+                  const hip = document.getElementById('sg-hip').value;
+                  const length = document.getElementById('sg-length').value;
+                  if (!chest && !waist && !hip && !length) {
+                    toast.error('Please enter at least one measurement');
+                    return;
+                  }
+                  const exists = (form.sizeGuide || []).find(g => g.size === size);
+                  if (exists) {
+                    toast.error(`Size ${size} already has a guide entry. Remove it first.`);
+                    return;
+                  }
+                  setForm({ ...form, sizeGuide: [...(form.sizeGuide || []), { size, chest, waist, hip, length }] });
+                  document.getElementById('sg-chest').value = '';
+                  document.getElementById('sg-waist').value = '';
+                  document.getElementById('sg-hip').value = '';
+                  document.getElementById('sg-length').value = '';
+                  toast.success(`Size guide added for ${size}`);
+                }}
+              >
+                + Add Size Entry
+              </button>
+            </div>
+
+            {(form.sizeGuide || []).length > 0 && (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Size</th>
+                    <th>Chest</th>
+                    <th>Waist</th>
+                    <th>Hip</th>
+                    <th>Length</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {form.sizeGuide.map((entry, index) => (
+                    <tr key={index}>
+                      <td><strong>{entry.size}</strong></td>
+                      <td>{entry.chest || '–'}</td>
+                      <td>{entry.waist || '–'}</td>
+                      <td>{entry.hip || '–'}</td>
+                      <td>{entry.length || '–'}</td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, sizeGuide: form.sizeGuide.filter((_, i) => i !== index) })}
                           className="btn-danger"
                           style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
                         >

@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import MobileBottomNav from './components/MobileBottomNav';
 import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -12,6 +13,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import Wishlist from './pages/Wishlist';
+import Profile from './pages/Profile';
 import Contact from './pages/policies/Contact';
 import FAQ from './pages/policies/FAQ';
 import TandC from './pages/policies/TandC';
@@ -53,6 +55,7 @@ function App() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/orders/:orderId" element={<Orders />} />
                 <Route path="/admin" element={<AdminRedirect />} />
@@ -68,6 +71,7 @@ function App() {
               </Routes>
             </main>
             <Footer />
+            <MobileBottomNav />
           </div>
         </NotificationProvider>
       </WishlistProvider>

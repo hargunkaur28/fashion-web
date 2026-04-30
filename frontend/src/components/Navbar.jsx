@@ -77,27 +77,30 @@ const Navbar = () => {
 
           <div className="navbar-right">
             <div className="nav-actions">
-              {isAuth ? (
-                <div className="profile-dropdown-wrapper">
-                  <button className="nav-action-item">
-                    <User size={20} />
-                    <span>Profile</span>
-                  </button>
-                  <div className="profile-dropdown">
-                    <div className="dropdown-header">
-                      <p className="font-heading">Hello {user?.name}</p>
-                      <p className="text-muted">{user?.email}</p>
+              <div className="hide-on-mobile">
+                {isAuth ? (
+                  <div className="profile-dropdown-wrapper">
+                    <button className="nav-action-item">
+                      <User size={20} />
+                      <span>Profile</span>
+                    </button>
+                    <div className="profile-dropdown">
+                      <div className="dropdown-header">
+                        <p className="font-heading">Hello {user?.name}</p>
+                        <p className="text-muted">{user?.email}</p>
+                      </div>
+                      <Link to="/profile" className="dropdown-item">My Account</Link>
+                      <Link to="/orders" className="dropdown-item">Orders</Link>
+                      <button onClick={() => { logout(); navigate('/'); }} className="dropdown-item">Logout</button>
                     </div>
-                    <Link to="/orders" className="dropdown-item">Orders</Link>
-                    <button onClick={() => { logout(); navigate('/'); }} className="dropdown-item">Logout</button>
                   </div>
-                </div>
-              ) : (
-                <Link to="/login" className="nav-action-item">
-                  <User size={20} />
-                  <span>Login</span>
-                </Link>
-              )}
+                ) : (
+                  <Link to="/login" className="nav-action-item">
+                    <User size={20} />
+                    <span>Login</span>
+                  </Link>
+                )}
+              </div>
 
               {isAuth && (
                 <div className="profile-dropdown-wrapper">
@@ -138,12 +141,12 @@ const Navbar = () => {
                 </div>
               )}
               
-              <Link to="/wishlist" className="nav-action-item">
+              <Link to="/wishlist" className="nav-action-item hide-on-mobile">
                 <Heart size={20} />
                 <span>Wishlist</span>
               </Link>
               
-              <Link to="/cart" className="nav-action-item cart-action">
+              <Link to="/cart" className="nav-action-item cart-action hide-on-mobile">
                 <ShoppingBag size={20} />
                 <span>Cart</span>
                 {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
@@ -214,20 +217,6 @@ const Navbar = () => {
               <User size={20} /> Login / Sign Up
             </Link>
           )}
-          <Link 
-            to="/wishlist" 
-            className="mobile-menu-item"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <Heart size={20} /> Wishlist
-          </Link>
-          <Link 
-            to="/cart" 
-            className="mobile-menu-item"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <ShoppingBag size={20} /> Cart {totalItems > 0 && `(${totalItems})`}
-          </Link>
         </div>
       </div>
     </>

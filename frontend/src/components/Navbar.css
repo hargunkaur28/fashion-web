@@ -528,6 +528,10 @@
     padding: 0 0.75rem;
   }
   
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
   .navbar-left {
     gap: 0.4rem;
   }
