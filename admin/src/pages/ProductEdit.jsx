@@ -27,6 +27,8 @@ const ProductEdit = () => {
     tags: [],
     isFeatured: false,
     isTrending: false,
+    isReturnable: true,
+    returnWindow: 14,
   });
 
   const [newVariantConfig, setNewVariantConfig] = useState({
@@ -62,7 +64,11 @@ const ProductEdit = () => {
   const fetchProduct = async () => {
     try {
       const { data } = await api.get(`/products/${id}`);
-      setForm(data.product);
+      // Ensure return policy fields have defaults for older products
+      const product = data.product;
+      if (product.isReturnable === undefined) product.isReturnable = true;
+      if (product.returnWindow === undefined) product.returnWindow = 14;
+      setForm(product);
       setLoading(false);
     } catch (err) {
       toast.error('Failed to load product');
@@ -414,6 +420,46 @@ const ProductEdit = () => {
               />
               Trending Product
             </label>
+          </div>
+
+          {/* Return Policy */}
+          <div style={{ marginBottom: '2rem', padding: '1.25rem', background: '#f9f9f9', border: '1px solid #e0d5ce', borderRadius: '0.5rem' }}>
+            <h4 style={{ marginBottom: '1rem', fontSize: '1rem', color: '#2d2d2d' }}>Return Policy</h4>
+            <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="returnPolicyEdit"
+                  checked={form.isReturnable}
+                  onChange={() => setForm({ ...form, isReturnable: true, returnWindow: form.returnWindow || 14 })}
+                />
+                <span style={{ fontWeight: 600, color: '#16a34a' }}>✓ Returnable</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="returnPolicyEdit"
+                  checked={!form.isReturnable}
+                  onChange={() => setForm({ ...form, isReturnable: false, returnWindow: 0 })}
+                />
+                <span style={{ fontWeight: 600, color: '#dc2626' }}>✕ Non-Returnable</span>
+              </label>
+              {form.isReturnable && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>Return Window:</label>
+                  <input
+                    type="number"
+                    value={form.returnWindow}
+                    onChange={(e) => setForm({ ...form, returnWindow: Number(e.target.value) })}
+                    className="form-input"
+                    style={{ width: '80px' }}
+                    min="1"
+                    max="90"
+                  />
+                  <span style={{ color: '#666', fontSize: '0.9rem' }}>days</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Variants Section */}

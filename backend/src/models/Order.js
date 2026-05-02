@@ -8,6 +8,14 @@ const orderItemSchema = new mongoose.Schema({
   variantColor: String,
   quantity: { type: Number, required: true },
   price: { type: Number, required: true },
+  returnStatus: {
+    type: String,
+    enum: ['none', 'requested', 'approved', 'rejected', 'completed'],
+    default: 'none',
+  },
+  returnReason: { type: String },
+  returnRequestedAt: { type: Date },
+  returnAdminNote: { type: String },
 });
 
 const shippingSchema = new mongoose.Schema({

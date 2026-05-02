@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Heart, ShoppingBag, Truck, RotateCcw, Star, X, Ruler } from 'lucide-react';
+import { Heart, ShoppingBag, Truck, RotateCcw, Star, X, Ruler, ShieldCheck, Ban } from 'lucide-react';
 import api from '../utils/api';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -268,11 +268,25 @@ const ProductDetail = () => {
               </div>
             </div>
             <div className="service-item mt-3">
-              <RotateCcw size={24} className="text-muted" />
-              <div>
-                <p className="font-weight-bold">14 Days Return Policy</p>
-                <p className="text-muted" style={{ fontSize: '0.85rem' }}>No questions asked</p>
-              </div>
+              {product.isReturnable === false ? (
+                <>
+                  <Ban size={24} style={{ color: '#dc2626' }} />
+                  <div>
+                    <p className="font-weight-bold" style={{ color: '#dc2626' }}>Non-Returnable</p>
+                    <p className="text-muted" style={{ fontSize: '0.85rem' }}>This product is not eligible for returns</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={24} style={{ color: '#16a34a' }} />
+                  <div>
+                    <p className="font-weight-bold" style={{ color: '#16a34a' }}>
+                      {product.returnWindow || 14} Days Return Policy
+                    </p>
+                    <p className="text-muted" style={{ fontSize: '0.85rem' }}>Easy returns, no questions asked</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

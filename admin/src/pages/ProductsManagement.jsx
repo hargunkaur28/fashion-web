@@ -30,6 +30,8 @@ const ProductsManagement = () => {
     tags: [],
     isFeatured: false,
     isTrending: false,
+    isReturnable: true,
+    returnWindow: 14,
   });
 
   const [newVariantConfig, setNewVariantConfig] = useState({
@@ -193,6 +195,8 @@ const ProductsManagement = () => {
       tags: [],
       isFeatured: false,
       isTrending: false,
+      isReturnable: true,
+      returnWindow: 14,
     });
     setImageUrl('');
     setImageUploadMode('file');
@@ -433,6 +437,46 @@ const ProductsManagement = () => {
                 <input type="checkbox" checked={form.isTrending} onChange={(e) => setForm({ ...form, isTrending: e.target.checked })} className="checkbox" />
                 <span style={{ fontWeight: 600 }}>Trending</span>
               </label>
+            </div>
+
+            {/* Return Policy */}
+            <div style={{ marginBottom: '1.5rem', padding: '1.25rem', background: '#fafafa', border: '1px solid #e0d5ce', borderRadius: '0.5rem' }}>
+              <h4 style={{ marginBottom: '1rem', fontSize: '1rem', color: '#2d2d2d' }}>Return Policy</h4>
+              <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="returnPolicy"
+                    checked={form.isReturnable}
+                    onChange={() => setForm({ ...form, isReturnable: true })}
+                  />
+                  <span style={{ fontWeight: 600, color: '#16a34a' }}>✓ Returnable</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="returnPolicy"
+                    checked={!form.isReturnable}
+                    onChange={() => setForm({ ...form, isReturnable: false, returnWindow: 0 })}
+                  />
+                  <span style={{ fontWeight: 600, color: '#dc2626' }}>✕ Non-Returnable</span>
+                </label>
+                {form.isReturnable && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <label style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>Return Window:</label>
+                    <input
+                      type="number"
+                      value={form.returnWindow}
+                      onChange={(e) => setForm({ ...form, returnWindow: Number(e.target.value) })}
+                      className="form-input"
+                      style={{ width: '80px' }}
+                      min="1"
+                      max="90"
+                    />
+                    <span style={{ color: '#666', fontSize: '0.9rem' }}>days</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Variants */}

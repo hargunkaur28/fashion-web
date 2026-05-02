@@ -23,6 +23,14 @@ const Orders = () => {
   const [reviewPhotos, setReviewPhotos] = useState([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
 
+  // Return Modal State
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
+  const [returnOrderId, setReturnOrderId] = useState(null);
+  const [returnItemId, setReturnItemId] = useState(null);
+  const [returnItemName, setReturnItemName] = useState('');
+  const [returnReason, setReturnReason] = useState('');
+  const [returning, setReturning] = useState(false);
+
   // Cancellation Modal State
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelOrderId, setCancelOrderId] = useState(null);
@@ -77,15 +85,27 @@ const Orders = () => {
     }
   };
 
-  const handleReturnItem = async (orderId) => {
-    if (window.confirm('Are you sure you want to request a return for this order?')) {
-      try {
-        await api.put(`/orders/${orderId}/return`);
-        toast.success('Return requested successfully');
-        fetchOrders();
-      } catch (err) {
-        toast.error(err.response?.data?.message || 'Failed to request return');
-      }
+  const openReturnModal = (orderId, item) => {
+    setReturnOrderId(orderId);
+    setReturnItemId(item._id);
+    setReturnItemName(item.name);
+    setReturnReason('');
+    setReturnModalOpen(true);
+  };
+
+  const handleReturnSubmit = async (e) => {
+    e.preventDefault();
+    if (!returnOrderId || !returnItemId) return;
+    setReturning(true);
+    try {
+      await api.put(`/orders/${returnOrderId}/return`, { itemId: returnItemId, reason: returnReason });
+      toast.success('Return requested successfully!');
+      setReturnModalOpen(false);
+      fetchOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to request return');
+    } finally {
+      setReturning(false);
     }
   };
 
@@ -269,11 +289,29 @@ const Orders = () => {
                                 <span>Color: <b>{item.variantColor}</b></span>
                                 <span>Qty: <b>{item.quantity}</b></span>
                               </div>
-                              {order.status === 'delivered' && (
-                                <button className="btn-review-inline" onClick={() => openReviewModal(item)}>
-                                  <Star size={12} /> Write a Review
-                                </button>
+                              {/* Per-item return status badge */}
+                              {item.returnStatus && item.returnStatus !== 'none' && (
+                                <div style={{
+                                  marginTop: '6px', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, display: 'inline-block',
+                                  background: item.returnStatus === 'requested' ? '#fef3c7' : item.returnStatus === 'approved' ? '#d1fae5' : '#fee2e2',
+                                  color: item.returnStatus === 'requested' ? '#92400e' : item.returnStatus === 'approved' ? '#065f46' : '#991b1b',
+                                }}>
+                                  Return {item.returnStatus.charAt(0).toUpperCase() + item.returnStatus.slice(1)}
+                                  {item.returnAdminNote && <span style={{ fontWeight: 400, marginLeft: '6px' }}>— {item.returnAdminNote}</span>}
+                                </div>
                               )}
+                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '8px', flexWrap: 'wrap' }}>
+                                {(order.status === 'delivered' || order.status === 'return_requested') && (!item.returnStatus || item.returnStatus === 'none') && (
+                                  <button className="btn-review-inline" style={{ color: '#dc2626', borderColor: '#fee2e2' }} onClick={() => openReturnModal(order._id, item)}>
+                                    ↩ Return Item
+                                  </button>
+                                )}
+                                {order.status === 'delivered' && (
+                                  <button className="btn-review-inline" onClick={() => openReviewModal(item)}>
+                                    <Star size={12} /> Write a Review
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                           );
@@ -332,9 +370,7 @@ const Orders = () => {
                       <Download size={16} /> {downloadingInvoiceId === order._id ? 'Downloading...' : 'Invoice'}
                     </button>
                     <Link to="/contact" className="btn-action-v2"><HelpCircle size={16} /> Support</Link>
-                    {order.status === 'delivered' && (
-                      <button className="btn-action-v2 danger" onClick={() => handleReturnItem(order._id)}>Return Order</button>
-                    )}
+
                     {['pending', 'confirmed', 'processing'].includes(order.status) && (
                       <button className="btn-action-v2 danger" onClick={() => { setCancelOrderId(order._id); setCancelModalOpen(true); }}>Cancel Order</button>
                     )}
@@ -428,6 +464,36 @@ const Orders = () => {
               <div className="d-flex gap-3">
                 <button type="button" className="btn-secondary flex-1" onClick={() => setCancelModalOpen(false)}>Go Back</button>
                 <button type="submit" className="btn-danger-v2 flex-1" disabled={cancelling}>{cancelling ? 'Sending...' : 'Confirm'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Return Modal */}
+      {returnModalOpen && (
+        <div className="modal-root" onClick={() => setReturnModalOpen(false)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <div className="modal-head danger">
+              <h4>Return Item</h4>
+              <button onClick={() => setReturnModalOpen(false)}><X size={20}/></button>
+            </div>
+            <form className="modal-form" onSubmit={handleReturnSubmit}>
+              <div style={{ padding: '12px', background: '#f9fafb', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                Requesting return for: <strong>{returnItemName}</strong>
+              </div>
+              <div className="alert-yellow">Please tell us why you want to return this item. Our team will review your request.</div>
+              <textarea
+                className="modal-input"
+                rows="4"
+                required
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                placeholder="Reason for return (e.g., wrong size, damaged, not as described)"
+              ></textarea>
+              <div className="d-flex gap-3">
+                <button type="button" className="btn-secondary flex-1" onClick={() => setReturnModalOpen(false)}>Go Back</button>
+                <button type="submit" className="btn-danger-v2 flex-1" disabled={returning}>{returning ? 'Sending...' : 'Request Return'}</button>
               </div>
             </form>
           </div>

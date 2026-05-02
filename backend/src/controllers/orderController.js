@@ -125,9 +125,10 @@ const trackOrder = asyncHandler(async (req, res) => {
   res.json({ success: true, order });
 });
 
-// @PUT /api/v1/orders/:id/return
+// @PUT /api/v1/orders/:id/return — Item-level partial return
 const returnOrder = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
+  const { itemId, reason } = req.body;
+  const order = await Order.findById(req.params.id).populate('items.product', 'isReturnable returnWindow name');
   if (!order) { res.status(404); throw new Error('Order not found'); }
   
   // Verify order belongs to user
@@ -135,14 +136,114 @@ const returnOrder = asyncHandler(async (req, res) => {
     res.status(403); throw new Error('Not authorized to return this order');
   }
 
-  // Only delivered orders can be returned
-  if (order.status !== 'delivered') {
-    res.status(400); throw new Error('Only delivered orders can be returned');
+  // Only delivered orders can have returns
+  if (order.status !== 'delivered' && order.status !== 'return_requested') {
+    res.status(400); throw new Error('Only delivered orders can have items returned');
   }
 
-  order.status = 'return_requested';
-  order.statusHistory.push({ status: 'return_requested', note: 'Return requested by customer pending admin approval' });
+  // Find the specific item
+  const item = order.items.id(itemId);
+  if (!item) { res.status(404); throw new Error('Item not found in this order'); }
+
+  // Check if already requested
+  if (item.returnStatus && item.returnStatus !== 'none') {
+    res.status(400); throw new Error(`This item already has return status: ${item.returnStatus}`);
+  }
+
+  // Check if product is returnable
+  if (item.product && item.product.isReturnable === false) {
+    res.status(400); throw new Error(`"${item.product.name || item.name}" is non-returnable`);
+  }
+
+  // Check return window
+  const deliveredEntry = order.statusHistory.find(h => h.status === 'delivered');
+  if (deliveredEntry) {
+    const returnWindow = item.product?.returnWindow ?? 14;
+    const deliveredDate = new Date(deliveredEntry.timestamp);
+    const deadlineDate = new Date(deliveredDate.getTime() + returnWindow * 24 * 60 * 60 * 1000);
+    if (new Date() > deadlineDate) {
+      res.status(400); throw new Error(`Return window of ${returnWindow} days has expired for "${item.name}"`);
+    }
+  }
+
+  // Mark this item for return
+  item.returnStatus = 'requested';
+  item.returnReason = reason || 'No reason provided';
+  item.returnRequestedAt = new Date();
+
+  // Update order-level status if any item has a return request
+  if (order.status === 'delivered') {
+    order.status = 'return_requested';
+    order.statusHistory.push({ 
+      status: 'return_requested', 
+      note: `Return requested for "${item.name}" — ${reason || 'No reason provided'}` 
+    });
+  } else {
+    // Already in return_requested, just add a history entry
+    order.statusHistory.push({ 
+      status: 'return_requested', 
+      note: `Additional return requested for "${item.name}" — ${reason || 'No reason provided'}` 
+    });
+  }
+
   await order.save();
+  res.json({ success: true, order });
+});
+
+// @PUT /api/v1/orders/:id/return-item-handle (admin) — Approve/reject a specific item return
+const handleItemReturn = asyncHandler(async (req, res) => {
+  const { itemId, action, adminNote } = req.body; // action: 'approve' or 'reject'
+  const order = await Order.findById(req.params.id);
+  if (!order) { res.status(404); throw new Error('Order not found'); }
+
+  const item = order.items.id(itemId);
+  if (!item) { res.status(404); throw new Error('Item not found in this order'); }
+
+  if (item.returnStatus !== 'requested') {
+    res.status(400); throw new Error('This item does not have a pending return request');
+  }
+
+  if (action === 'approve') {
+    item.returnStatus = 'approved';
+    item.returnAdminNote = adminNote || 'Return approved';
+    order.statusHistory.push({ 
+      status: 'returned', 
+      note: `Return approved for "${item.name}". ${adminNote || ''}` 
+    });
+  } else {
+    item.returnStatus = 'rejected';
+    item.returnAdminNote = adminNote || 'Return rejected';
+    order.statusHistory.push({ 
+      status: 'return_rejected', 
+      note: `Return rejected for "${item.name}". ${adminNote || ''}` 
+    });
+  }
+
+  // Auto-update order status based on all items' return states
+  const allItems = order.items;
+  const hasRequested = allItems.some(i => i.returnStatus === 'requested');
+  const allProcessed = allItems.every(i => i.returnStatus === 'none' || i.returnStatus === 'approved' || i.returnStatus === 'rejected');
+  
+  if (!hasRequested && allProcessed) {
+    const hasApproved = allItems.some(i => i.returnStatus === 'approved');
+    const allRejected = allItems.filter(i => i.returnStatus !== 'none').every(i => i.returnStatus === 'rejected');
+    
+    if (allRejected) {
+      order.status = 'return_rejected';
+    } else if (hasApproved) {
+      order.status = 'returned';
+    }
+  }
+
+  await order.save();
+
+  // Send Notification
+  await createNotification({
+    user: order.user,
+    title: `Return ${action === 'approve' ? 'Approved' : 'Rejected'}: ${item.name}`,
+    message: `Your return request for "${item.name}" in order #${order.orderNumber} has been ${action}d. ${adminNote || ''}`,
+    link: `/orders/${order._id}`
+  });
 
   res.json({ success: true, order });
 });
@@ -223,6 +324,7 @@ module.exports = {
   getOrderStats, 
   trackOrder, 
   returnOrder,
+  handleItemReturn,
   requestOrderCancellation,
   handleCancellationRequest
 };

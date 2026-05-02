@@ -54,6 +54,17 @@ const OrdersManagement = () => {
     }
   };
 
+  const handleItemReturnAction = async (orderId, itemId, action) => {
+    const adminNote = window.prompt(`Note for ${action === 'approve' ? 'approving' : 'rejecting'} this item return (optional):`) || '';
+    try {
+      await api.put(`/orders/${orderId}/return-item-handle`, { itemId, action, adminNote });
+      toast.success(`Item return ${action}d successfully`);
+      fetchOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to process item return');
+    }
+  };
+
   const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'cancel_requested', 'return_requested', 'return_rejected', 'returned'];
 
   if (loading) return <div>Loading...</div>;
@@ -151,11 +162,41 @@ const OrdersManagement = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1rem' }}>
                   <div>
                     <h4>Items</h4>
-                    {order.items.map((item, idx) => (
-                      <div key={idx} style={{ marginBottom: '0.5rem' }}>
-                        <span>{item.name}</span> x <span style={{ fontWeight: 'bold' }}>{item.quantity}</span> @ ₹{item.price}
+                    {order.items.map((item, idx) => {
+                      const rStatus = item.returnStatus || 'none';
+                      const statusColors = { none: '#6b7280', requested: '#f59e0b', approved: '#10b981', rejected: '#ef4444', completed: '#3b82f6' };
+                      return (
+                      <div key={idx} style={{ marginBottom: '0.75rem', padding: '0.75rem', background: 'white', borderRadius: '0.5rem', border: '1px solid #eee' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span><strong>{item.name}</strong> x {item.quantity} @ ₹{item.price}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#888' }}>{item.variantSize} / {item.variantColor}</span>
+                        </div>
+                        {rStatus !== 'none' && (
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <span style={{
+                              display: 'inline-block', padding: '3px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700,
+                              background: rStatus === 'requested' ? '#fef3c7' : rStatus === 'approved' ? '#d1fae5' : '#fee2e2',
+                              color: statusColors[rStatus],
+                            }}>
+                              Return: {rStatus.charAt(0).toUpperCase() + rStatus.slice(1)}
+                            </span>
+                            {item.returnReason && <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#666' }}>Reason: {item.returnReason}</p>}
+                            {item.returnAdminNote && <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#888', fontStyle: 'italic' }}>Admin: {item.returnAdminNote}</p>}
+                            {rStatus === 'requested' && (
+                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                <button onClick={() => handleItemReturnAction(order._id, item._id, 'approve')} style={{ padding: '4px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                                  ✓ Approve Return
+                                </button>
+                                <button onClick={() => handleItemReturnAction(order._id, item._id, 'reject')} style={{ padding: '4px 12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                                  ✕ Reject Return
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <div>
                     <h4>Shipping Address</h4>

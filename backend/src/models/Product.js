@@ -58,6 +58,8 @@ const productSchema = new mongoose.Schema(
     isFeatured: { type: Boolean, default: false },
     isTrending: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+    isReturnable: { type: Boolean, default: true },
+    returnWindow: { type: Number, default: 14 },  // days
   },
   { timestamps: true }
 );
